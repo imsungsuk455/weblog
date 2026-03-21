@@ -1,32 +1,13 @@
 @echo off
-setlocal
-
-echo.
-echo ============================================
-echo   AI Blog Dashboard Launcher (Gemini 3 Flash)
-echo ============================================
-echo.
-echo [i] Starting server on http://localhost:3001
-echo [i] Please wait, the browser will open automatically...
-echo.
+cd /d "%~dp0"
 
 if not exist node_modules (
-    echo [!] node_modules directory not found.
-    echo [i] Installing dependencies...
-    cmd /c npm install
-    if %errorlevel% neq 0 (
-        echo [X] npm install failed. Please check your internet connection and Node.js installation.
-        pause
-        exit /b %errorlevel%
-    )
+    echo Installing dependencies...
+    call npm install
 )
 
-node scripts/dashboard-server.js
-
-if %errorlevel% neq 0 (
-    echo.
-    echo [X] Error starting dashboard server. 
-    echo [i] Make sure you have Node.js installed and dependencies are installed (npm install).
-    echo [i] Also check your GEMINI_API_KEY in .env
-    pause
-)
+echo Starting AI Blog Dashboard...
+start "AI Blog Dashboard" node scripts/dashboard-server.js
+timeout /t 2 /nobreak >nul
+start "" http://localhost:3001
+exit

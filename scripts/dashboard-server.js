@@ -12,7 +12,6 @@ const PORT = 3001;
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static("scripts")); // Serve static files from scripts directory
 
 let currentApiKey = process.env.GEMINI_API_KEY;
 let genAI = new GoogleGenerativeAI(currentApiKey || "dummy");
@@ -80,7 +79,7 @@ app.post("/api/save", (req, res) => {
       .trim()
       .replace(/[^\w\s-]/g, "")
       .replace(/\s+/g, "-");
-    
+
     const dateStr = new Date().toISOString().split("T")[0];
     const fileName = `${dateStr}-${sanitizedTitle}.md`;
     const filePath = path.join(process.cwd(), "src/data/blog", fileName);
@@ -144,24 +143,126 @@ app.get("/api/posts", (req, res) => {
   }
 });
 
+// API route to get post content
+app.get("/api/post-content", (req, res) => {
+  const { file } = req.query;
+  if (!file) {
+    return res.status(400).json({ error: "File name is required" });
+  }
+
+  const blogDir = path.join(process.cwd(), "src/data/blog");
+  const filePath = path.join(blogDir, file);
+
+  try {
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    const content = fs.readFileSync(filePath, "utf8");
+    res.json({ content });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // API route to list categories
 app.get("/api/categories", (req, res) => {
   const blogDir = path.join(process.cwd(), "src/data/blog");
+  const categoriesDir = path.join(blogDir, ".categories");
   try {
-    if (!fs.existsSync(blogDir)) return res.json({ categories: ["General"] });
-    
-    const files = fs.readdirSync(blogDir).filter(f => f.endsWith(".md"));
     const categories = new Set(["General"]);
-    
-    files.forEach(f => {
-      const content = fs.readFileSync(path.join(blogDir, f), "utf8");
-      const match = content.match(/category:\s*(.*)/);
-      if (match && match[1]) {
-        categories.add(match[1].trim().replace(/['"]/g, ""));
-      }
-    });
-    
-    res.json({ categories: Array.from(categories) });
+
+    // Load categories from marker files
+    if (fs.existsSync(categoriesDir)) {
+      const markerFiles = fs.readdirSync(categoriesDir).filter(f => f.endsWith(".txt"));
+      markerFiles.forEach(f => {
+        const categoryName = f.replace(".txt", "");
+        categories.add(categoryName);
+      });
+    }
+
+    // Also scan existing posts for categories
+    if (fs.existsSync(blogDir)) {
+      const files = fs.readdirSync(blogDir).filter(f => f.endsWith(".md"));
+      files.forEach(f => {
+        const content = fs.readFileSync(path.join(blogDir, f), "utf8");
+        const match = content.match(/category:\s*(.*)/);
+        if (match && match[1]) {
+          categories.add(match[1].trim().replace(/['"]/g, ""));
+        }
+      });
+    }
+
+    res.json({ categories: Array.from(categories).sort() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API route to add category (create a marker file)
+app.post("/api/categories", (req, res) => {
+  const { category } = req.body;
+  if (!category || category.trim() === "") {
+    return res.status(400).json({ error: "카테고리 이름이 필요합니다." });
+  }
+
+  const blogDir = path.join(process.cwd(), "src/data/blog");
+  const categoriesDir = path.join(blogDir, ".categories");
+
+  try {
+    // Create categories directory if not exists
+    if (!fs.existsSync(categoriesDir)) {
+      fs.mkdirSync(categoriesDir, { recursive: true });
+    }
+
+    // Create a marker file for the category
+    const categoryFile = path.join(categoriesDir, `${category.trim()}.txt`);
+    if (fs.existsSync(categoryFile)) {
+      return res.status(400).json({ error: "이미 존재하는 카테고리입니다." });
+    }
+
+    fs.writeFileSync(categoryFile, `Category: ${category.trim()}\nCreated: ${new Date().toISOString()}\n`);
+    res.json({ message: "카테고리가 추가되었습니다.", category: category.trim() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API route to delete category
+app.delete("/api/categories", (req, res) => {
+  const { category } = req.body;
+  if (!category || category.trim() === "") {
+    return res.status(400).json({ error: "카테고리 이름이 필요합니다." });
+  }
+
+  if (category === "General") {
+    return res.status(400).json({ error: "기본 카테고리는 삭제할 수 없습니다." });
+  }
+
+  const blogDir = path.join(process.cwd(), "src/data/blog");
+  const categoriesDir = path.join(blogDir, ".categories");
+  const categoryFile = path.join(categoriesDir, `${category.trim()}.txt`);
+
+  try {
+    // Delete the category marker file
+    if (fs.existsSync(categoryFile)) {
+      fs.unlinkSync(categoryFile);
+    }
+
+    // Update posts that were in this category to "General"
+    if (fs.existsSync(blogDir)) {
+      const files = fs.readdirSync(blogDir).filter(f => f.endsWith(".md"));
+      files.forEach(f => {
+        const filePath = path.join(blogDir, f);
+        let content = fs.readFileSync(filePath, "utf8");
+        const categoryRegex = new RegExp(`category:\\s*['"]?${category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]?`, 'g');
+        if (categoryRegex.test(content)) {
+          content = content.replace(categoryRegex, "category: General");
+          fs.writeFileSync(filePath, content);
+        }
+      });
+    }
+
+    res.json({ message: "카테고리가 삭제되었습니다." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -169,8 +270,8 @@ app.get("/api/categories", (req, res) => {
 
 // API route to get config
 app.get("/api/config", (req, res) => {
-  const maskedKey = currentApiKey && currentApiKey.length > 10 
-    ? `${currentApiKey.substring(0, 8)}...${currentApiKey.substring(currentApiKey.length - 4)}` 
+  const maskedKey = currentApiKey && currentApiKey.length > 10
+    ? `${currentApiKey.substring(0, 8)}...${currentApiKey.substring(currentApiKey.length - 4)}`
     : (currentApiKey || "");
   res.json({ apiKey: maskedKey, isSet: !!currentApiKey });
 });
@@ -181,11 +282,11 @@ app.post("/api/config", (req, res) => {
   if (!apiKey || apiKey.trim() === "") {
     return res.status(400).json({ error: "유효한 API 키를 입력해주세요." });
   }
-  
+
   try {
     currentApiKey = apiKey.trim();
     genAI = new GoogleGenerativeAI(currentApiKey);
-    
+
     // Update .env file
     const envPath = path.join(process.cwd(), ".env");
     let envContent = "";
@@ -199,12 +300,15 @@ app.post("/api/config", (req, res) => {
       envContent = envContent.trim() + `\nGEMINI_API_KEY=${currentApiKey}\n`;
     }
     fs.writeFileSync(envPath, envContent.trim() + "\n");
-    
+
     res.json({ message: "API 키가 성공적으로 업데이트되었습니다." });
   } catch (err) {
     res.status(500).json({ error: "설정 업데이트 실패: " + err.message });
   }
 });
+
+// Serve static files from scripts directory (after API routes)
+app.use(express.static("scripts"));
 
 // Serve the dashboard HTML
 app.get("/", (req, res) => {

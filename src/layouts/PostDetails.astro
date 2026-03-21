@@ -104,7 +104,13 @@ const nextPost =
           <div class="flex items-center gap-1.5 opacity-80 decoration-dashed underline-offset-4">
             <span class="max-sm:hidden">|</span>
             <span class="sr-only">Category:</span>
-            <span class="font-medium text-accent italic">{category}</span>
+            <a
+              href={`/categories/${slugifyStr(category)}/`}
+              transition:name={slugifyStr(category)}
+              class="font-medium text-accent italic hover:underline"
+            >
+              {category}
+            </a>
           </div>
         )
       }

@@ -1,6 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
+cd /d "%~dp0"
+
 echo.
 echo ============================================
 echo   AI Blog Post Generator (Gemini 3 Flash)

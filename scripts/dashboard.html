@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -188,8 +189,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Section Cards */
@@ -213,7 +221,8 @@
             color: var(--text-main);
         }
 
-        input[type="text"], textarea {
+        input[type="text"],
+        textarea {
             width: 100%;
             padding: 14px 18px;
             border-radius: 12px;
@@ -223,7 +232,8 @@
             transition: var(--transition);
         }
 
-        input:focus, textarea:focus {
+        input:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 4px var(--primary-light);
@@ -308,12 +318,81 @@
         }
 
         @keyframes slideUp {
-            from { transform: translateY(100px); }
-            to { transform: translateY(0); }
+            from {
+                transform: translateY(100px);
+            }
+
+            to {
+                transform: translateY(0);
+            }
         }
 
-        .success { background-color: var(--primary); }
-        .error { background-color: #EF4444; }
+        .success {
+            background-color: var(--primary);
+        }
+
+        .error {
+            background-color: #EF4444;
+        }
+
+        /* Category Card Styles */
+        .category-card {
+            background: #F9FAFB;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .category-card:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: #E5E7EB;
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .btn-icon:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-icon.delete:hover {
+            background: #FEE2E2;
+            color: #EF4444;
+        }
 
         .loader {
             border: 2px solid #f3f3f3;
@@ -326,18 +405,24 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body>
     <aside>
         <div class="logo">
             <i data-lucide="zap"></i>
             <span>Blog AI</span>
         </div>
-        
+
         <div class="menu-label">Menu</div>
         <a class="menu-item active" data-view="dashboard">
             <i data-lucide="layout-dashboard"></i>
@@ -350,6 +435,10 @@
         <a class="menu-item" data-view="posts">
             <i data-lucide="file-text"></i>
             <span>글 목록</span>
+        </a>
+        <a class="menu-item" data-view="categories">
+            <i data-lucide="folder-tree"></i>
+            <span>카테고리 관리</span>
         </a>
 
         <div class="menu-label">Settings</div>
@@ -386,12 +475,14 @@
                     <div class="stat-label">임시 저장 (Drafts)</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background-color: #DBEAFE; color: #3B82F6;"><i data-lucide="eye"></i></div>
+                    <div class="stat-icon" style="background-color: #DBEAFE; color: #3B82F6;"><i data-lucide="eye"></i>
+                    </div>
                     <div class="stat-value">--</div>
                     <div class="stat-label">사이트 방문자</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background-color: #FEF3C7; color: #F59E0B;"><i data-lucide="clock"></i></div>
+                    <div class="stat-icon" style="background-color: #FEF3C7; color: #F59E0B;"><i
+                            data-lucide="clock"></i></div>
                     <div class="stat-value" id="stat-today">0</div>
                     <div class="stat-label">오늘 생성된 글</div>
                 </div>
@@ -415,9 +506,10 @@
                 <div class="input-group">
                     <label for="category">카테고리 (Category)</label>
                     <input type="text" id="category" placeholder="예: IT/Tech, 일상, 맛집 등" value="General">
-                    <div id="existing-categories" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                    <div id="existing-categories" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
+                    </div>
                 </div>
-                
+
                 <button id="generate-btn" class="btn">
                     <span class="loader" id="gen-loader"></span>
                     <i data-lucide="sparkles"></i>
@@ -449,32 +541,59 @@
             </div>
         </section>
 
+        <!-- View: Categories -->
+        <section id="view-categories" class="view-content">
+            <div class="section-card">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                    <div class="stat-icon" style="margin-bottom: 0; width: 40px; height: 40px;"><i
+                            data-lucide="folder-tree"></i></div>
+                    <h2 style="margin: 0;">카테고리 관리</h2>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 24px;">블로그 게시물을 분류하는 카테고리를 생성 및 관리합니다.</p>
+
+                <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                    <input type="text" id="new-category-input" placeholder="새 카테고리 이름을 입력하세요" style="flex: 1;">
+                    <button id="add-category-btn" class="btn">
+                        <i data-lucide="plus"></i> 추가
+                    </button>
+                </div>
+
+                <div id="categories-list"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;">
+                    <!-- Categories will be loaded here -->
+                </div>
+            </div>
+        </section>
+
         <!-- View: Settings -->
         <section id="view-settings" class="view-content">
             <div class="section-card">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-                    <div class="stat-icon" style="margin-bottom: 0; width: 40px; height: 40px;"><i data-lucide="key"></i></div>
+                    <div class="stat-icon" style="margin-bottom: 0; width: 40px; height: 40px;"><i
+                            data-lucide="key"></i></div>
                     <h2 style="margin: 0;">API 설정 및 모델 정보</h2>
                 </div>
                 <p style="color: var(--text-muted); margin-bottom: 24px;">Gemini 3 Flash 모델 사용을 위한 API 키를 관리합니다.</p>
-                
+
                 <div class="input-group">
                     <label for="api-key-input">Gemini API Key</label>
                     <div style="display: flex; gap: 8px;">
                         <input type="text" id="api-key-input" placeholder="새로운 API 키를 입력하세요 (AIza...)" style="flex: 1;">
                         <button id="save-config-btn" class="btn">저장</button>
                     </div>
-                    <p id="current-key-display" style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 8px;"></p>
+                    <p id="current-key-display"
+                        style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 8px;"></p>
                 </div>
 
                 <div class="input-group">
                     <label>Active Model</label>
                     <input type="text" value="gemini-3-flash" disabled style="background-color: #F3F4F6;">
                 </div>
-                
+
                 <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border);">
                     <p style="font-size: 0.8125rem; color: var(--text-muted);">
-                        <i data-lucide="info" style="display: inline-block; vertical-align: middle; width: 14px; height: 14px; margin-right: 4px;"></i>
+                        <i data-lucide="info"
+                            style="display: inline-block; vertical-align: middle; width: 14px; height: 14px; margin-right: 4px;"></i>
                         설정된 API 키는 프로젝트 루트의 <code>.env</code> 파일에 자동으로 저장됩니다.
                     </p>
                 </div>
@@ -497,6 +616,7 @@
             'dashboard': '대시보드 요약',
             'writer': 'AI 글쓰기 도구',
             'posts': '게시물 관리',
+            'categories': '카테고리 관리',
             'settings': '시스템 설정'
         };
 
@@ -511,7 +631,7 @@
 
                 views.forEach(v => v.classList.remove('active'));
                 document.getElementById('view-' + targetView).classList.add('active');
-                
+
                 viewTitle.innerText = viewTitles[targetView] || '대시보드';
 
                 if (targetView === 'dashboard' || targetView === 'posts') {
@@ -519,6 +639,9 @@
                 }
                 if (targetView === 'settings') {
                     loadConfig();
+                }
+                if (targetView === 'categories') {
+                    loadCategoryManagement();
                 }
             });
         });
@@ -591,7 +714,7 @@
                 // Load Posts
                 const postsRes = await fetch('/api/posts');
                 const { posts } = await postsRes.json();
-                
+
                 const renderPosts = (containerId) => {
                     const container = document.getElementById(containerId);
                     if (posts.length === 0) {
@@ -670,7 +793,7 @@
                 const { categories = [] } = await res.json();
                 const container = document.getElementById('existing-categories');
                 if (!container) return;
-                
+
                 container.innerHTML = categories.map(cat => `
                     <span class="cat-pill" style="font-size: 0.75rem; background: #E5E7EB; padding: 4px 8px; border-radius: 999px; cursor: pointer; transition: all 0.2s;" onclick="setCategory('${cat}')">
                         ${cat}
@@ -684,6 +807,128 @@
         function setCategory(cat) {
             document.getElementById('category').value = cat;
         }
+
+        // Category Management
+        const newCategoryInput = document.getElementById('new-category-input');
+        const addCategoryBtn = document.getElementById('add-category-btn');
+        const categoriesList = document.getElementById('categories-list');
+
+        async function loadCategoryManagement() {
+            try {
+                const res = await fetch('/api/categories');
+                const { categories = [] } = await res.json();
+
+                if (categories.length === 0) {
+                    categoriesList.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1;">카테고리가 없습니다. 새로운 카테고리를 추가해보세요.</p>';
+                    return;
+                }
+
+                // Get post count for each category
+                const postsRes = await fetch('/api/posts');
+                const { posts } = await postsRes.json();
+                const categoryPosts = {};
+                categories.forEach(cat => categoryPosts[cat] = 0);
+
+                // Count posts per category (simplified - would need to parse frontmatter for accurate count)
+                for (const post of posts) {
+                    try {
+                        const postRes = await fetch(`/api/post-content?file=${encodeURIComponent(post.fileName)}`);
+                        const postData = await postRes.json();
+                        if (postData.content) {
+                            const match = postData.content.match(/category:\s*['"]?(.*)['"]?/);
+                            if (match) {
+                                const cat = match[1].trim().replace(/['"]/g, '');
+                                if (categoryPosts[cat] !== undefined) {
+                                    categoryPosts[cat]++;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // Skip if can't read
+                    }
+                }
+
+                categoriesList.innerHTML = categories.map(cat => `
+                    <div class="category-card" data-category="${cat}">
+                        <div class="category-name">
+                            <i data-lucide="folder" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                            <span>${cat}</span>
+                            <span class="category-count">${categoryPosts[cat] || 0}개</span>
+                        </div>
+                        <div class="category-actions">
+                            ${cat !== 'General' ? `
+                            <button class="btn-icon delete" onclick="deleteCategory('${cat}')" title="카테고리 삭제">
+                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                            </button>
+                            ` : '<span style="font-size: 0.75rem; color: var(--text-muted);">기본</span>'}
+                        </div>
+                    </div>
+                `).join('');
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Failed to load categories:', err);
+                categoriesList.innerHTML = '<p style="color: var(--text-muted);">카테고리를 불러오는데 실패했습니다.</p>';
+            }
+        }
+
+        addCategoryBtn.addEventListener('click', async () => {
+            const categoryName = newCategoryInput.value.trim();
+            if (!categoryName) {
+                notify('카테고리 이름을 입력해 주세요.', 'error');
+                return;
+            }
+
+            addCategoryBtn.disabled = true;
+            try {
+                const response = await fetch('/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: categoryName })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                notify('카테고리가 추가되었습니다: ' + categoryName, 'success');
+                newCategoryInput.value = '';
+                loadCategoryManagement();
+                loadCategories();
+            } catch (err) {
+                notify('오류: ' + err.message, 'error');
+            } finally {
+                addCategoryBtn.disabled = false;
+            }
+        });
+
+        newCategoryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addCategoryBtn.click();
+            }
+        });
+
+        window.deleteCategory = async (categoryName) => {
+            if (!confirm(`"${categoryName}" 카테고리를 삭제하시겠습니까?\n이 카테고리에 속한 게시물은 "General" 카테고리로 이동됩니다.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/categories', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: categoryName })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                notify('카테고리가 삭제되었습니다.', 'success');
+                loadCategoryManagement();
+                loadCategories();
+            } catch (err) {
+                notify('오류: ' + err.message, 'error');
+            }
+        };
 
         // Save Logic
         const saveBtn = document.getElementById('save-btn');
@@ -723,4 +968,5 @@
         loadCategories();
     </script>
 </body>
+
 </html>
