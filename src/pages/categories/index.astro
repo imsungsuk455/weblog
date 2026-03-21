@@ -11,9 +11,9 @@ const posts = await getCollection("blog");
 const categories = getUniqueCategories(posts);
 ---
 
-<Layout title={`Categories | ${SITE.title}`}>
+<Layout title={`카테고리 | ${SITE.title}`}>
   <Header />
-  <Main pageTitle="Categories" pageDesc="All the categories used in posts.">
+  <Main pageTitle="카테고리" pageDesc="포스트들에 사용된 모든 카테고리들입니다.">
     <ul class="flex flex-wrap gap-6">
       {
         categories.map(({ category, categoryName }) => (

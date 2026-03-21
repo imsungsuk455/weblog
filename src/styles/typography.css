@@ -3,18 +3,24 @@
 @layer base {
   /* ===== Override default Tailwind Typography styles ===== */
   .app-prose {
-    @apply prose;
+    @apply prose max-w-none text-lg leading-relaxed;
 
-    h1,
-    h2,
-    h3,
-    h4,
-    th {
-      @apply mb-3 text-foreground;
+    h1 {
+      @apply mb-8 text-4xl font-extrabold tracking-tight sm:text-5xl;
+    }
+
+    h2 {
+      @apply relative mb-6 mt-12 flex items-center gap-3 border-l-4 border-accent bg-accent/5 py-3 pl-5 text-2xl font-bold text-foreground sm:text-3xl;
+      border-radius: 0 12px 12px 0;
     }
 
     h3 {
-      @apply italic;
+      @apply mb-4 mt-8 flex items-center gap-2 text-xl font-bold text-foreground sm:text-2xl;
+    }
+
+    h3::before {
+      content: "•";
+      @apply text-accent;
     }
 
     p,
@@ -24,11 +30,11 @@
     figcaption,
     table,
     code {
-      @apply text-foreground;
+      @apply text-slate-700 dark:text-slate-300;
     }
 
     a {
-      @apply wrap-break-word text-foreground decoration-dashed underline-offset-4 hover:text-accent focus-visible:no-underline;
+      @apply wrap-break-word text-accent font-semibold no-underline decoration-accent/30 decoration-2 underline-offset-4 hover:underline;
     }
 
     ul {
@@ -36,72 +42,51 @@
     }
 
     li {
-      @apply marker:text-accent;
+      @apply marker:text-accent mb-2;
     }
 
     hr {
-      @apply border-border;
+      @apply border-border my-12;
     }
 
     img {
-      @apply mx-auto border border-border;
+      @apply mx-auto rounded-3xl border border-border shadow-lg transition-transform duration-300 hover:scale-[1.01];
     }
 
     figcaption {
-      @apply opacity-75;
+      @apply mt-4 text-center text-sm opacity-75;
     }
 
     table {
+      @apply w-full overflow-hidden rounded-xl border-collapse;
       th,
       td {
-        @apply border border-border p-2;
+        @apply border border-border p-4;
       }
 
       th {
-        @apply py-1.5;
-      }
-
-      code {
-        @apply break-all sm:break-normal;
+        @apply bg-muted font-bold;
       }
     }
 
     code {
-      @apply rounded bg-muted/75 p-1 wrap-break-word text-foreground before:content-none after:content-none;
-    }
-
-    .astro-code code {
-      @apply flex-[1_0_100%] bg-inherit p-0;
+      @apply rounded-lg bg-muted px-1.5 py-0.5 font-mono text-sm font-medium text-accent before:content-none after:content-none;
     }
 
     blockquote {
-      @apply border-s-accent/80 wrap-break-word opacity-80;
-    }
-
-    details {
-      @apply inline-block cursor-pointer text-foreground select-none [&_p]:hidden [&_ul]:my-0!;
-    }
-
-    summary {
-      @apply focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent focus-visible:outline-dashed;
-    }
-
-    pre {
-      @apply focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-dashed;
+      @apply border-l-4 border-accent italic bg-accent/5 px-8 py-6 rounded-r-2xl text-slate-600 dark:text-slate-400 font-medium;
     }
   }
 
   /* ===== Code Blocks & Syntax Highlighting ===== */
   .astro-code {
-    @apply flex border bg-(--shiki-light-bg) text-(--shiki-light) outline-border [&_span]:text-(--shiki-light);
+    @apply flex overflow-hidden rounded-2xl border bg-(--shiki-light-bg) p-6 text-(--shiki-light) outline-border [&_span]:text-(--shiki-light);
   }
 
   html[data-theme="dark"] .astro-code {
     @apply bg-(--shiki-dark-bg) text-(--shiki-dark) [&_span]:text-(--shiki-dark);
   }
 
-  /* Styles for Shiki transformers */
-  /* https://shiki.style/packages/transformers */
   .astro-code {
     .line.diff.add {
       @apply relative inline-block w-full bg-green-400/20 before:absolute before:-left-3 before:text-green-500 before:content-['+'];

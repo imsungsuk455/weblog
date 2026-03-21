@@ -446,9 +446,9 @@
             <i data-lucide="settings"></i>
             <span>시스템 설정</span>
         </a>
-        <a class="menu-item" href="https://github.com/satnaing/astro-paper" target="_blank">
+        <a class="menu-item" href="http://localhost:4321" target="_blank">
             <i data-lucide="external-link"></i>
-            <span>블로그 보기</span>
+            <span>로컬 블로그 보기</span>
         </a>
     </aside>
 
@@ -510,6 +510,30 @@
                     </div>
                 </div>
 
+                <div class="input-group">
+                    <label for="pub-date">발행 일시 예약 (선택 사항)</label>
+                    <input type="datetime-local" id="pub-date">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">비워두면 현재 시간이 자동으로 입력됩니다.</p>
+                </div>
+
+                <div class="input-group" style="padding: 20px; background: var(--primary-light); border-radius: 12px; margin-bottom: 24px;">
+                    <label style="color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="image"></i> AI 썸네일 생성
+                    </label>
+                    <p style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 12px;">글 주제에 맞는 이미지를 생성하여 본문에 삽입합니다.</p>
+                    <div id="image-preview-container" style="display: none; margin-bottom: 12px;">
+                        <img id="image-preview" src="" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                        <button id="remove-image-btn" style="background: none; border: none; color: #EF4444; font-size: 0.75rem; cursor: pointer; margin-top: 4px;">이미지 삭제</button>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button id="gen-image-btn" class="btn" style="background-color: white; color: var(--primary); border: 2px solid var(--primary); font-size: 0.875rem; padding: 10px 16px;">
+                            <span class="loader" id="img-loader"></span>
+                            이미지 생성하기
+                        </button>
+                        <span id="img-status" style="font-size: 0.75rem; display: flex; align-items: center; color: var(--text-muted);"></span>
+                    </div>
+                </div>
+
                 <button id="generate-btn" class="btn">
                     <span class="loader" id="gen-loader"></span>
                     <i data-lucide="sparkles"></i>
@@ -519,11 +543,14 @@
                 <div id="editor-container" style="display: none;">
                     <label for="content">생성된 마크다운 내용 (검토 및 수정)</label>
                     <textarea id="content"></textarea>
-                    <div style="margin-top: 20px; display: flex; gap: 12px;">
-                        <button id="save-btn" class="btn btn-success" style="background-color: var(--primary);">
-                            <i data-lucide="check-circle"></i> 게시물 저장
+                    <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button id="save-btn" class="btn" style="background-color: #6B7280;">
+                            <i data-lucide="save"></i> 임시 저장
                         </button>
-                        <button id="reset-btn" class="btn" style="background-color: #6B7280;">
+                        <button id="publish-btn" class="btn" style="background-color: var(--primary);">
+                            <i data-lucide="send"></i> 즉시 발행
+                        </button>
+                        <button id="reset-btn" class="btn" style="background-color: white; color: var(--text-muted); border: 1px solid var(--border);">
                             <i data-lucide="refresh-cw"></i> 초기화
                         </button>
                     </div>
@@ -576,16 +603,19 @@
                 <p style="color: var(--text-muted); margin-bottom: 24px;">Gemini 3 Flash 모델 사용을 위한 API 키를 관리합니다.</p>
 
                 <div class="input-group">
-                    <label for="api-key-input">Gemini API Key</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="api-key-input" placeholder="새로운 API 키를 입력하세요 (AIza...)" style="flex: 1;">
-                        <button id="save-config-btn" class="btn">저장</button>
-                    </div>
-                    <p id="current-key-display"
-                        style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 8px;"></p>
+                    <label for="setting-api-key">Gemini API Key</label>
+                    <input type="password" id="setting-api-key" placeholder="Gemini API 키를 입력하세요">
+                </div>
+                
+                <div class="input-group">
+                    <label for="setting-unsplash-key">Unsplash Access Key</label>
+                    <input type="password" id="setting-unsplash-key" placeholder="Unsplash Access 키를 입력하세요">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">지정된 3개의 추가 이미지를 Unsplash에서 가져오는 데 사용됩니다.</p>
                 </div>
 
-                <div class="input-group">
+                <button id="save-config-btn" class="btn">설정 저장하기</button>
+
+                <div class="input-group" style="margin-top: 24px;">
                     <label>Active Model</label>
                     <input type="text" value="gemini-3-flash" disabled style="background-color: #F3F4F6;">
                 </div>
@@ -647,49 +677,47 @@
         });
 
         // Config Management
-        const apiKeyInput = document.getElementById('api-key-input');
-        const saveConfigBtn = document.getElementById('save-config-btn');
-        const keyDisplay = document.getElementById('current-key-display');
-
+        // Load config from server
         async function loadConfig() {
             try {
-                const res = await fetch('/api/config');
-                const data = await res.json();
-                if (data.apiKey) {
-                    keyDisplay.innerHTML = `현재 설정된 키: <strong>${data.apiKey}</strong>`;
-                } else {
-                    keyDisplay.innerHTML = `현재 설정된 키가 없습니다.`;
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                if (data.isSet) {
+                    document.getElementById('setting-api-key').placeholder = `설정됨 (${data.apiKey})`;
+                    document.getElementById('setting-api-key').value = "";
+                }
+                if (data.isUnsplashSet) {
+                    document.getElementById('setting-unsplash-key').placeholder = `설정됨 (${data.unsplashKey})`;
+                    document.getElementById('setting-unsplash-key').value = "";
                 }
             } catch (err) {
-                console.error('Failed to load config:', err);
+                console.error('Config fetch failed:', err);
             }
         }
 
-        saveConfigBtn.addEventListener('click', async () => {
-            const apiKey = apiKeyInput.value.trim();
-            if (!apiKey) {
-                notify('API 키를 입력해 주세요.', 'error');
+        document.getElementById('save-config-btn').addEventListener('click', async () => {
+            const apiKey = document.getElementById('setting-api-key').value.trim();
+            const unsplashKey = document.getElementById('setting-unsplash-key').value.trim();
+            
+            if (!apiKey && !unsplashKey) {
+                notify('업데이트할 키를 입력해 주세요.', 'info');
                 return;
             }
 
-            saveConfigBtn.disabled = true;
             try {
                 const response = await fetch('/api/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ apiKey })
+                    body: JSON.stringify({ apiKey, unsplashKey })
                 });
 
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
                 notify(data.message, 'success');
-                apiKeyInput.value = '';
                 loadConfig();
             } catch (err) {
                 notify('오류 발생: ' + err.message, 'error');
-            } finally {
-                saveConfigBtn.disabled = false;
             }
         });
 
@@ -725,9 +753,15 @@
                         <div class="post-item">
                             <div class="post-info">
                                 <h3>${p.fileName}</h3>
-                                <p>수정일: ${new Date(p.mtime).toLocaleString('ko-KR')}</p>
+                                <p>발행일: ${p.pubDatetime ? new Date(p.pubDatetime).toLocaleString('ko-KR') : '알 수 없음'}</p>
                             </div>
-                            <div class="post-badges">
+                            <div class="post-actions" style="display: flex; gap: 8px; align-items: center;">
+                                ${p.draft ? `
+                                    <span class="badge" style="background: #FEE2E2; color: #991B1B;">임시저장</span>
+                                    <button class="btn" style="padding: 4px 8px; font-size: 0.75rem; background: var(--primary);" onclick="publishPost('${p.fileName}')">발행</button>
+                                ` : `
+                                    <span class="badge" style="background: #D1FAE5; color: #065F46;">발행됨</span>
+                                `}
                                 <span style="font-size: 0.75rem; background: #E5E7EB; padding: 4px 8px; border-radius: 4px;">Markdown</span>
                             </div>
                         </div>
@@ -764,17 +798,88 @@
 
             try {
                 const category = document.getElementById('category').value.trim() || "General";
+                const pubDateInput = document.getElementById('pub-date').value;
+                const pubDate = pubDateInput ? new Date(pubDateInput).toISOString() : new Date().toISOString();
 
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic, category })
+                    body: JSON.stringify({ topic, category, pubDate })
                 });
 
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
-                contentArea.value = data.content;
+                 let content = data.content;
+ 
+                 // Update pubDatetime in content if provided
+                 if (pubDateInput) {
+                     content = content.replace(/pubDatetime:\s*.*?\n/, `pubDatetime: ${pubDate}\n`);
+                 }
+
+                 // If there's a generated image, inject it into frontmatter
+                const currentImg = document.getElementById('image-preview').src;
+                if (currentImg && currentImg.includes('/assets/images/')) {
+                    const imgName = currentImg.split('/').pop();
+                    const imgPath = '../../assets/images/' + imgName; // Changed to relative for Astro 5 compatibility
+                    
+                    if (content.includes('ogImage:')) {
+                        content = content.replace(/ogImage:\s*.*?\n/, `ogImage: "${imgPath}"\n`);
+                    } else {
+                        // Insert after title or description
+                        content = content.replace(/(title:.*?\n)/, `$1ogImage: "${imgPath}"\n`);
+                    }
+
+                    // Also add at top of body (below frontmatter)
+                    const bodyStart = content.indexOf('---', 4) + 3;
+                    if (bodyStart > 3) {
+                        const imgMarkdown = `\n\n![Thumbnail](${imgPath})\n\n`;
+                        content = content.slice(0, bodyStart) + imgMarkdown + content.slice(bodyStart);
+                    }
+                }
+
+                // Unsplash Image Replacement Logic
+                let unsplashMatches = content.match(/\[UNSPLASH:\s*(.*?)\]/g) || [];
+                
+                // Fallback: If AI didn't provide enough tags, find H2 tags and add them
+                if (unsplashMatches.length < 3) {
+                    const h2Regex = /^##\s+(.*)$/gm;
+                    let match;
+                    let count = unsplashMatches.length;
+                    while ((match = h2Regex.exec(content)) !== null && count < 3) {
+                        const h2Text = match[1];
+                        const newTag = `\n[UNSPLASH: ${h2Text}]\n`;
+                        // Insert after the H2 line
+                        const insertPos = match.index + match[0].length;
+                        content = content.slice(0, insertPos) + newTag + content.slice(insertPos);
+                        count++;
+                    }
+                    // Refresh matches
+                    unsplashMatches = content.match(/\[UNSPLASH:\s*(.*?)\]/g) || [];
+                }
+
+                if (unsplashMatches.length > 0) {
+                    notify(`${unsplashMatches.length}개의 본문 이미지를 가져오는 중...`, 'info');
+                    for (const match of unsplashMatches) {
+                        const keywordMatch = match.match(/\[UNSPLASH:\s*(.*?)\]/);
+                        if (!keywordMatch) continue;
+                        const keyword = keywordMatch[1];
+                        try {
+                            const res = await fetch(`/api/unsplash-search?query=${encodeURIComponent(keyword)}`);
+                            const imgData = await res.json();
+                            if (imgData.url) {
+                                content = content.replace(match, `\n\n![${keyword}](${imgData.url})\n\n`);
+                            } else {
+                                content = content.replace(match, ""); // Remove failed tags
+                            }
+                        } catch (err) {
+                            console.error('Unsplash fetch error:', err);
+                            content = content.replace(match, ""); // Remove failed tags
+                        }
+                    }
+                }
+
+                contentArea.value = content;
                 editorContainer.style.display = 'block';
                 notify('AI 글 작성이 완료되었습니다!', 'success');
             } catch (err) {
@@ -785,6 +890,66 @@
                 genText.innerText = 'AI 글 생성하기';
             }
         });
+
+        // Image Generation JS Logic
+        const genImgBtn = document.getElementById('gen-image-btn');
+        const imgLoader = document.getElementById('img-loader');
+        const imgStatus = document.getElementById('img-status');
+        const imgPreview = document.getElementById('image-preview');
+        const imgPreviewContainer = document.getElementById('image-preview-container');
+
+        genImgBtn.addEventListener('click', async () => {
+            const topic = topicInput.value.trim();
+            if (!topic) {
+                notify('이미지를 생성하려면 글 주제를 먼저 입력해 주세요.', 'error');
+                return;
+            }
+
+            genImgBtn.disabled = true;
+            imgLoader.style.display = 'inline-block';
+            imgStatus.innerText = '이미지를 그리는 중...';
+
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                imgPreview.src = data.url;
+                imgPreviewContainer.style.display = 'block';
+                imgStatus.innerText = '완료!';
+                notify('AI 이미지가 생성되었습니다.', 'success');
+            } catch (err) {
+                imgStatus.innerText = '실패';
+                notify('이미지 생성 실패: ' + err.message, 'error');
+            } finally {
+                genImgBtn.disabled = false;
+                imgLoader.style.display = 'none';
+            }
+        });
+
+        window.publishPost = async (fileName) => {
+            if (!confirm(`"${fileName}" 글을 바로 발행하시겠습니까?`)) return;
+
+            try {
+                const res = await fetch('/api/publish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileName })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                notify('글이 성공적으로 발행되었습니다!', 'success');
+                loadData();
+            } catch (err) {
+                notify('발행 실패: ' + err.message, 'error');
+            }
+        };
 
         // Load Categories
         async function loadCategories() {
@@ -857,6 +1022,9 @@
                         </div>
                         <div class="category-actions">
                             ${cat !== 'General' ? `
+                            <button class="btn-icon" onclick="renameCategory('${cat}')" title="이름 변경">
+                                <i data-lucide="edit-2" style="width: 16px; height: 16px;"></i>
+                            </button>
                             <button class="btn-icon delete" onclick="deleteCategory('${cat}')" title="카테고리 삭제">
                                 <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
                             </button>
@@ -930,13 +1098,48 @@
             }
         };
 
+        window.renameCategory = async (oldName) => {
+            const newName = prompt(`"${oldName}"의 새로운 이름을 입력하세요:`, oldName);
+            if (!newName || newName.trim() === "" || newName.trim() === oldName) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/categories', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ oldName, newName: newName.trim() })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                notify('카테고리 이름이 변경되었습니다.', 'success');
+                loadCategoryManagement();
+                loadCategories();
+            } catch (err) {
+                notify('오류: ' + err.message, 'error');
+            }
+        };
+
         // Save Logic
         const saveBtn = document.getElementById('save-btn');
-        saveBtn.addEventListener('click', async () => {
-            const content = contentArea.value.trim();
+        const publishBtn = document.getElementById('publish-btn');
+        
+        async function savePost(isPublish) {
+            let content = contentArea.value.trim();
             if (!content) return;
 
-            saveBtn.disabled = true;
+            // Change draft status
+            if (isPublish) {
+                content = content.replace(/draft:\s*true/, 'draft: false');
+            } else if (!content.includes('draft: true')) {
+                // If saving as draft but frontmatter says false, switch it back
+                content = content.replace(/draft:\s*false/, 'draft: true');
+            }
+
+            const btn = isPublish ? publishBtn : saveBtn;
+            btn.disabled = true;
             try {
                 const response = await fetch('/api/save', {
                     method: 'POST',
@@ -947,14 +1150,18 @@
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
-                notify('게시물이 성공적으로 저장되었습니다: ' + data.fileName, 'success');
+                const statusText = isPublish ? '성공적으로 발행' : '임시 저장';
+                notify(`게시물이 ${statusText}되었습니다: ${data.fileName}`, 'success');
                 loadData();
             } catch (err) {
                 notify('오류: ' + err.message, 'error');
             } finally {
-                saveBtn.disabled = false;
+                btn.disabled = false;
             }
-        });
+        }
+
+        saveBtn.addEventListener('click', () => savePost(false));
+        publishBtn.addEventListener('click', () => savePost(true));
 
         const resetBtn = document.getElementById('reset-btn');
         resetBtn.addEventListener('click', () => {

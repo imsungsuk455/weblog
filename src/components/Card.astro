@@ -1,5 +1,4 @@
 ---
-import type { CollectionEntry } from "astro:content";
 import { slugifyStr } from "@/utils/slugify";
 import { getPath } from "@/utils/getPath";
 import Datetime from "./Datetime.astro";
@@ -13,28 +12,40 @@ const { variant: Heading = "h2", id, data, filePath } = Astro.props;
 const { title, description, ...props } = data;
 ---
 
-<li class="my-6">
+<li class="my-8 group">
   <a
     href={getPath(id, filePath)}
-    class:list={[
-      "inline-block text-lg font-medium text-accent",
-      "decoration-dashed underline-offset-4 hover:underline",
-      "focus-visible:no-underline focus-visible:underline-offset-0",
-    ]}
+    class="flex flex-col sm:flex-row gap-6 p-6 rounded-3xl bg-white dark:bg-slate-900 border border-border shadow-sm hover:shadow-xl hover:shadow-accent/5 transition-all duration-300"
   >
     {
-      data.category && (
-        <span class="mb-1 block text-sm font-medium text-accent/80 italic">
-          {data.category}
-        </span>
+      data.ogImage && (
+        <div class="flex-none w-full sm:w-48 h-48 sm:h-32 overflow-hidden rounded-2xl border border-border">
+          <img 
+            src={typeof data.ogImage === 'string' ? data.ogImage : data.ogImage.src} 
+            alt={title}
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        </div>
       )
     }
-    <Heading
-      style={{ viewTransitionName: slugifyStr(title.replaceAll(".", "-")) }}
-    >
-      {title}
-    </Heading>
+    <div class="flex flex-col justify-center flex-1">
+      {
+        data.category && (
+          <span class="mb-2 block text-xs font-bold uppercase tracking-wider text-accent/80">
+            {data.category}
+          </span>
+        )
+      }
+      <Heading
+        class="text-xl font-bold text-foreground group-hover:text-accent transition-colors"
+        style={{ viewTransitionName: slugifyStr(title.replaceAll(".", "-")) }}
+      >
+        {title}
+      </Heading>
+      <div class="mt-2 opacity-80">
+        <Datetime {...props} />
+      </div>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">{description}</p>
+    </div>
   </a>
-  <Datetime {...props} />
-  <p>{description}</p>
 </li>

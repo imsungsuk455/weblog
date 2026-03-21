@@ -14,6 +14,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 let currentApiKey = process.env.GEMINI_API_KEY;
+let currentUnsplashKey = process.env.UNSPLASH_ACCESS_KEY;
 let genAI = new GoogleGenerativeAI(currentApiKey || "dummy");
 
 // API route to generate content
@@ -25,29 +26,68 @@ app.post("/api/generate", async (req, res) => {
 
   const { category = "General" } = req.body;
 
-  const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-3-flash-preview",
+    tools: [
+      {
+        googleSearch: {},
+      },
+    ],
+  });
   const pubDate = new Date().toISOString();
 
   const prompt = `
-    Generate a high-quality blog post about: ${topic}.
-    The output must be in Markdown format with the following frontmatter structure:
+    당신은 쏟아지는 정보 속에서 핵심만 짚어주는 '닥터노마드(Dr. Nomad)' 블로그의 전문 에디터입니다. 당신의 목표는 독자의 자산을 지키는 유용한 경제/금융/IT 지식을 깔끔하게 정리해 제공하는 것입니다. 다음 주제에 대해 고품질의 블로그 글을 작성해 주세요.
+    
+    주제: ${topic}
+    카테고리: ${category}
+
+    [필수 구성 및 지침]
+    1. 제목: 클릭을 부르는 매력적이고 구체적인 제목 (과장/낚시 금지)
+    2. 서론 (3~5문단): 다룰 내용, 중요성, 독자가 얻는 이득을 자연스럽게 소개
+    3. 본문 (소제목 H2 3~5개): 
+       - 각 소제목 아래: 핵심 요약 1문장, 구체적인 설명 3~6문단
+       - 예시, 단계별 목록(튜토리얼), 주의사항, 저자의 경험담 스타일의 팁 포함
+    4. 결론 (2~4문장): 핵심 요약 및 2~3개의 실천 항목(Bullet list)
+    5. Q&A: 글의 마지막에 질문과 답변 형식의 섹션 추가
+    
+    [톤 및 스타일]
+    - 친절한 존댓말 블로그체, 짧고 명확한 문장
+    - 한국 서비스와 상황을 우선으로 설명
+    - 개인의 경험이나 의견, 생각을 반드시 포함하여 작성
+    - 글자수는 2000자에서 3000자 사이로 풍부하게 작성 (중요)
+    
+    [이미지 구성 가이드 - 필수!]
+    - 본문 중간중간(소제목 H2 아래)에 반드시 총 3개의 이미지가 들어갈 자리를 다음 형식으로 정확히 표기하세요: 
+      [UNSPLASH: 이미지_검색_키워드]
+    - 예시: 
+      ## 1. 강아지 사료 고르는 법
+      [UNSPLASH: healthy dog food]
+      사료를 고를 때는 성분표를...
+    - 썸네일은 자동으로 삽입되므로 본문에는 [UNSPLASH: ...] 태그만 3개 넣으세요.
+    - 검색 키워드는 영어로 작성하는 것이 Unsplash 검색 결과가 더 좋습니다.
+    
+    [출력 형식]
+    - 반드시 마크다운(Markdown) 형식을 사용하세요.
+    - 제목(H1), 소제목(H2), 소소제목(H3)을 적절히 사용하세요.
+    - 아래의 Frontmatter 구조를 글의 맨 처음에 반드시 포함하세요:
 
     ---
     author: AI Assistant
     pubDatetime: ${pubDate}
-    title: [Title of the post]
+    title: [작성한 제목]
     featured: false
     draft: true
     tags:
-      - [tag1]
-      - [tag2]
+      - [태그1]
+      - [태그2]
     category: ${category}
-    description: [A short, engaging description of the post]
+    description: [글에 대한 짧고 매력적인 요약 설명]
     ---
 
-    [The post content in Markdown, with headings, lists, and clear explanations.]
+    [이후 마크다운 본문 시작]
     
-    Return only the markdown content, no extra text.
+    반드시 마크다운 내용만 반환하고, 앞뒤에 불필요한 설명은 넣지 마세요.
   `;
 
   try {
@@ -129,14 +169,19 @@ app.get("/api/posts", (req, res) => {
     const files = fs.readdirSync(blogDir)
       .filter(f => f.endsWith(".md"))
       .map(f => {
-        const stats = fs.statSync(path.join(blogDir, f));
+        const filePath = path.join(blogDir, f);
+        const stats = fs.statSync(filePath);
+        const content = fs.readFileSync(filePath, "utf8");
+        const draftMatch = content.match(/draft:\s*(true|false)/);
+        const pubMatch = content.match(/pubDatetime:\s*(.*)/);
         return {
           fileName: f,
-          mtime: stats.mtime
+          mtime: stats.mtime,
+          draft: draftMatch ? draftMatch[1] === "true" : false,
+          pubDatetime: pubMatch ? pubMatch[1].trim() : null
         };
       })
-      .sort((a, b) => b.mtime - a.mtime)
-      .slice(0, 10); // Latest 10
+      .sort((a, b) => b.mtime - a.mtime);
     res.json({ posts: files });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -268,47 +313,182 @@ app.delete("/api/categories", (req, res) => {
   }
 });
 
+// API route to rename category
+app.put("/api/categories", (req, res) => {
+  const { oldName, newName } = req.body;
+  if (!oldName || !newName || oldName.trim() === "" || newName.trim() === "") {
+    return res.status(400).json({ error: "이전 이름과 새 이름이 모두 필요합니다." });
+  }
+
+  if (oldName === "General") {
+    return res.status(400).json({ error: "기본 카테고리는 이름을 변경할 수 없습니다." });
+  }
+
+  const blogDir = path.join(process.cwd(), "src/data/blog");
+  const categoriesDir = path.join(blogDir, ".categories");
+  const oldFile = path.join(categoriesDir, `${oldName.trim()}.txt`);
+  const newFile = path.join(categoriesDir, `${newName.trim()}.txt`);
+
+  try {
+    // Rename the category marker file
+    if (fs.existsSync(oldFile)) {
+      if (fs.existsSync(newFile)) {
+        return res.status(400).json({ error: "이미 존재하는 카테고리 이름입니다." });
+      }
+      fs.renameSync(oldFile, newFile);
+    }
+
+    // Update posts that were in this category to the new name
+    if (fs.existsSync(blogDir)) {
+      const files = fs.readdirSync(blogDir).filter(f => f.endsWith(".md"));
+      files.forEach(f => {
+        const filePath = path.join(blogDir, f);
+        let content = fs.readFileSync(filePath, "utf8");
+        const categoryRegex = new RegExp(`category:\\s*['"]?${oldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]?`, 'g');
+        if (categoryRegex.test(content)) {
+          content = content.replace(categoryRegex, `category: ${newName.trim()}`);
+          fs.writeFileSync(filePath, content);
+        }
+      });
+    }
+
+    res.json({ message: "카테고리 이름이 성공적으로 변경되었습니다." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // API route to get config
 app.get("/api/config", (req, res) => {
-  const maskedKey = currentApiKey && currentApiKey.length > 10
-    ? `${currentApiKey.substring(0, 8)}...${currentApiKey.substring(currentApiKey.length - 4)}`
-    : (currentApiKey || "");
-  res.json({ apiKey: maskedKey, isSet: !!currentApiKey });
+  const mask = (key) => key && key.length > 10
+    ? `${key.substring(0, 8)}...${key.substring(key.length - 4)}`
+    : (key || "");
+  
+  res.json({ 
+    apiKey: mask(currentApiKey), 
+    unsplashKey: mask(currentUnsplashKey),
+    isSet: !!currentApiKey,
+    isUnsplashSet: !!currentUnsplashKey
+  });
 });
 
 // API route to update config
 app.post("/api/config", (req, res) => {
-  const { apiKey } = req.body;
-  if (!apiKey || apiKey.trim() === "") {
-    return res.status(400).json({ error: "유효한 API 키를 입력해주세요." });
-  }
-
+  const { apiKey, unsplashKey } = req.body;
+  
   try {
-    currentApiKey = apiKey.trim();
-    genAI = new GoogleGenerativeAI(currentApiKey);
+    let envPath = path.join(process.cwd(), ".env");
+    let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, "utf8") : "";
 
-    // Update .env file
-    const envPath = path.join(process.cwd(), ".env");
-    let envContent = "";
-    if (fs.existsSync(envPath)) {
-      envContent = fs.readFileSync(envPath, "utf8");
+    if (apiKey && apiKey.trim() !== "" && !apiKey.includes("...")) {
+        currentApiKey = apiKey.trim();
+        genAI = new GoogleGenerativeAI(currentApiKey);
+        if (envContent.includes("GEMINI_API_KEY=")) {
+          envContent = envContent.replace(/GEMINI_API_KEY=.*/, `GEMINI_API_KEY=${currentApiKey}`);
+        } else {
+          envContent += `\nGEMINI_API_KEY=${currentApiKey}`;
+        }
     }
 
-    if (envContent.includes("GEMINI_API_KEY=")) {
-      envContent = envContent.replace(/GEMINI_API_KEY=.*/, `GEMINI_API_KEY=${currentApiKey}`);
-    } else {
-      envContent = envContent.trim() + `\nGEMINI_API_KEY=${currentApiKey}\n`;
+    if (unsplashKey && unsplashKey.trim() !== "" && !unsplashKey.includes("...")) {
+        currentUnsplashKey = unsplashKey.trim();
+        if (envContent.includes("UNSPLASH_ACCESS_KEY=")) {
+          envContent = envContent.replace(/UNSPLASH_ACCESS_KEY=.*/, `UNSPLASH_ACCESS_KEY=${currentUnsplashKey}`);
+        } else {
+          envContent += `\nUNSPLASH_ACCESS_KEY=${currentUnsplashKey}`;
+        }
     }
+
     fs.writeFileSync(envPath, envContent.trim() + "\n");
-
-    res.json({ message: "API 키가 성공적으로 업데이트되었습니다." });
+    res.json({ message: "설정이 성공적으로 업데이트되었습니다." });
   } catch (err) {
     res.status(500).json({ error: "설정 업데이트 실패: " + err.message });
   }
 });
 
+// API route to search Unsplash
+app.get("/api/unsplash-search", async (req, res) => {
+  const { query } = req.query;
+  if (!currentUnsplashKey) {
+    return res.status(400).json({ error: "Unsplash API 키가 설정되지 않았습니다." });
+  }
+
+  try {
+    const response = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&client_id=${currentUnsplashKey}`);
+    const data = await response.json();
+    if (data.results && data.results.length > 0) {
+      res.json({ url: data.results[0].urls.regular });
+    } else {
+      res.json({ url: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1000" }); // Fallback
+    }
+  } catch (err) {
+    res.status(500).json({ error: "Unsplash 검색 실패: " + err.message });
+  }
+});
+
+// API route to generate image
+app.post("/api/generate-image", async (req, res) => {
+  const { prompt, topic } = req.body;
+  if (!prompt && !topic) {
+    return res.status(400).json({ error: "Prompt or Topic is required" });
+  }
+
+  const imageModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
+  const imagePrompt = prompt || `A professional, high-quality blog banner image for the topic: ${topic}. Clean, modern, and engaging style.`;
+
+  try {
+    const result = await imageModel.generateContent(imagePrompt);
+    const response = await result.response;
+    // Assuming the response contains an image in the latest SDK modality
+    const imagePart = response.candidates[0].content.parts.find(p => p.inlineData);
+    
+    if (!imagePart) {
+      throw new Error("No image data returned from AI");
+    }
+
+    const buffer = Buffer.from(imagePart.inlineData.data, "base64");
+    const filename = `ai-img-${Date.now()}.png`;
+    const imageDir = path.join(process.cwd(), "public/assets/images");
+    const imagePath = path.join(imageDir, filename);
+
+    // Create directory if not exists
+    if (!fs.existsSync(imageDir)) {
+      fs.mkdirSync(imageDir, { recursive: true });
+    }
+
+    fs.writeFileSync(imagePath, buffer);
+    res.json({ message: "이미지가 성공적으로 생성되었습니다.", url: `/assets/images/${filename}`, fileName: filename });
+  } catch (err) {
+    res.status(500).json({ error: "이미지 생성 실패: " + err.message });
+  }
+});
+
+// API route to publish existing draft
+app.post("/api/publish", (req, res) => {
+  const { fileName } = req.body;
+  if (!fileName) return res.status(400).json({ error: "Filename is required" });
+
+  const blogDir = path.join(process.cwd(), "src/data/blog");
+  const filePath = path.join(blogDir, fileName);
+
+  try {
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "파일을 찾을 수 없습니다." });
+    }
+
+    let content = fs.readFileSync(filePath, "utf8");
+    content = content.replace(/draft:\s*true/, "draft: false");
+    fs.writeFileSync(filePath, content);
+
+    res.json({ message: "게시물이 성공적으로 발행되었습니다." });
+  } catch (err) {
+    res.status(500).json({ error: "발행 중 오류 발생: " + err.message });
+  }
+});
+
 // Serve static files from scripts directory (after API routes)
 app.use(express.static("scripts"));
+app.use("/assets/images", express.static(path.join(process.cwd(), "public/assets/images")));
 
 // Serve the dashboard HTML
 app.get("/", (req, res) => {

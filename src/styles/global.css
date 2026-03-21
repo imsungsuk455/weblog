@@ -1,27 +1,30 @@
 @import "tailwindcss";
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
 @import "./typography.css";
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 :root,
 html[data-theme="light"] {
-  --background: #fdfdfd;
-  --foreground: #282728;
-  --accent: #006cac;
-  --muted: #e6e6e6;
-  --border: #ece9e9;
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --accent: #10b981; /* Emerald 500 */
+  --accent-light: #d1fae5;
+  --muted: #f1f5f9;
+  --border: #e2e8f0;
 }
 
 html[data-theme="dark"] {
-  --background: #212737;
-  --foreground: #eaedf3;
-  --accent: #ff6b01;
-  --muted: #343f60;
-  --border: #ab4b08;
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --accent: #06b6d4; /* Cyan 500 */
+  --accent-light: #164e63;
+  --muted: #1e293b;
+  --border: #334155;
 }
 
 @theme inline {
-  --font-app: var(--font-google-sans-code);
+  --font-app: "Pretendard", system-ui, -apple-system, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
@@ -32,39 +35,49 @@ html[data-theme="dark"] {
 @layer base {
   * {
     @apply border-border outline-accent/75;
-    scrollbar-width: auto;
-    scrollbar-color: var(--color-muted) transparent;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-accent) transparent;
   }
   html {
     @apply overflow-y-scroll scroll-smooth;
   }
   body {
     @apply flex min-h-svh flex-col bg-background font-app text-foreground selection:bg-accent/75 selection:text-background;
-  }
-  a,
-  button {
-    @apply outline-offset-1 outline-accent focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-dashed;
-  }
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
-    cursor: pointer;
+    background-image: 
+      radial-gradient(circle at 0% 0%, var(--accent-light) 0%, transparent 25%),
+      radial-gradient(circle at 100% 100%, #e0f2fe 0%, transparent 25%);
+    background-attachment: fixed;
   }
 }
 
 @utility max-w-app {
-  @apply max-w-3xl;
+  @apply max-w-4xl; /* Slightly wider for the modern look */
 }
 
 @utility app-layout {
-  @apply mx-auto w-full max-w-app px-4;
+  @apply mx-auto w-full max-w-app px-4 sm:px-6;
+}
+
+.modern-card {
+  @apply bg-white dark:bg-slate-900 rounded-[2rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-8 sm:p-12 mb-10;
 }
 
 .active-nav {
-  @apply underline decoration-wavy decoration-2 underline-offset-8;
+  @apply text-accent font-bold;
+  position: relative;
 }
 
-/* Source: https://piccalil.li/blog/a-more-modern-css-reset/ */
-/* Anything that has been anchored to should have extra scroll margin */
+.active-nav::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--accent);
+  border-radius: 2px;
+}
+
 :target {
-  scroll-margin-block: 1rem;
+  scroll-margin-block: 2rem;
 }

@@ -1,37 +1,47 @@
 ---
 layout: ../layouts/AboutLayout.astro
-title: "About"
+title: "닥터노마드 소개"
 ---
 
-AstroPaper is a minimal, accessible and SEO-friendly blog theme built with [Astro](https://astro.build/) and [Tailwind CSS](https://tailwindcss.com/).
+![닥터노마드(Dr. Nomad) 배너](../assets/images/finnote-about.png)
 
-![Astro Paper](public/astropaper-og.jpg)
+## ✍️ "쏟아지는 정보 과잉의 시대, 당신만의 경제 필기 노트"
 
-AstroPaper provides a solid foundation for blogs, or even portfolios\_ with full markdown support, built-in dark mode, and a clean layout that works out-of-the-box.
+매일 아침 눈을 뜨면 수천 건의 경제 기사, 코인 시황, 그리고 시시각각 변하는 투자 정보가 우리를 덮쳐옵니다. 
+하지만 그 수많은 활자 중에서 **진짜 나의 자산을 지켜줄 수 있는 정보**는 얼마나 될까요?
 
-The blog posts in this theme also serve as guides, docs or example articles\_ making AstroPaper a flexible starting point for your next content-driven site.
+**닥터노마드(Dr. Nomad)**는 'Doctor(전문가)'와 'Nomad(유목민)'의 합성어입니다. 
+우리는 복잡한 금융 시장의 노우스에서 자유로운 전문가의 시선으로, 마치 노트에 핵심만 필기하듯 깔끔하게 정리된 **팩트(Fact)**와 **인사이트(Insight)**를 제공합니다.
 
-## Features
+---
 
-AstroPaper comes with a set of useful features that make content publishing easy and effective:
+## 🎯 우리의 미션 (Mission)
 
-- SEO-friendly
-- Fast performance
-- Light & dark mode
-- Highly customizable
-- Organizable blog posts
-- Responsive & accessible
-- Static search with [PageFind](https://pagefind.app/)
-- Automatic social image generation
+### 1. 자산의 수호자 (Guardian of Assets)
+투자의 기회를 찾는 것도 중요하지만, 더 중요한 것은 리스크를 관리하고 소중한 자산을 지키는 것입니다. 닥터노마드는 독자들이 현명한 판단을 내릴 수 있도록 검증된 정보만을 필터링합니다.
 
-and so much more.
+### 2. 복잡함을 단순함으로 (Complexity into Simplicity)
+어려운 거시 경제 지표나 기술적 분석을 누구나 이해하기 쉬운 언어로 풀어냅니다. 우리는 '설명할 수 없다면 제대로 아는 것이 아니다'라는 원칙을 지킵니다.
 
-## Show your support
+### 3. 매일의 가치 있는 기록 (Daily Valuable Records)
+단순한 뉴스 전달에 그치지 않고, 오늘 발생한 경제 현상이 내일의 우리 삶에 어떤 영향을 주는지 집요하게 분석하고 기록합니다.
 
-If you like [AstroPaper](https://github.com/satnaing/astro-paper), consider giving it a star ⭐️.
+---
 
-Found a bug 🐛 or have an improvement ✨ in mind? Feel free to open an [issue](https://github.com/satnaing/astro-paper/issues), submit a [pull request](https://github.com/satnaing/astro-paper/pulls) or start a [discussion](https://github.com/satnaing/astro-paper/discussions).
+## 🧭 닥터노마드가 다루는 이야기
 
-If you find this theme helpful, you can also [sponsor me on GitHub](https://github.com/sponsors/satnaing) or [buy me a coffee](https://buymeacoffee.com/satnaing) to show your support — every penny counts.
+- **GLOBAL ECONOMY**: 금리, 환율, 원자재 등 전 세계 돈의 흐름
+- **CRYPTO & WEB 3**: 변동성 속에서 찾아내는 블록체인의 가치와 실전 시황
+- **SMART INVESTMENT**: 부동산, 주식, 대체 투자 등 자산별 전략
+- **LIFE FINANCE**: 세금, 보험, 정부 지원금 등 놓치기 쉬운 실전 생활 금융
 
-Kyay zuu! 🙏🏼
+---
+
+## 🤝 함께 성장하는 공간
+
+닥터노마드는 일방적인 정보 전달 공간이 아닙니다. 이 기록들을 통해 여러분이 투자의 기준을 세우고, 경제적 자유에 한 걸음 더 다가갈 수 있기를 바랍니다.
+
+질문이나 제안, 혹은 협업에 대한 문의는 언제나 환영합니다. 
+여러분의 성공적인 투자 여정에 **닥터노마드**가 든든한 페이스메이커가 되어드리겠습니다.
+
+> **"오늘의 기록이 내일의 기회가 됩니다."**
