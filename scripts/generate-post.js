@@ -10,6 +10,7 @@ async function generatePost() {
 
   const topic = process.argv[2] || "a trendy technology or lifestyle topic";
   const rawDate = process.argv[3];
+  const categoryArg = process.argv[4] || "others";
   const pubDate = (rawDate && rawDate.trim() !== "" && rawDate !== "undefined") ? new Date(rawDate) : new Date();
 
   // If the date is invalid, default to now
@@ -31,6 +32,7 @@ async function generatePost() {
     tags:
       - [tag1]
       - [tag2]
+    category: ${categoryArg}
     description: [A short, engaging description of the post]
     ---
 

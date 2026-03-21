@@ -10,6 +10,17 @@ echo [i] Starting server on http://localhost:3001
 echo [i] Please wait, the browser will open automatically...
 echo.
 
+if not exist node_modules (
+    echo [!] node_modules directory not found.
+    echo [i] Installing dependencies...
+    cmd /c npm install
+    if %errorlevel% neq 0 (
+        echo [X] npm install failed. Please check your internet connection and Node.js installation.
+        pause
+        exit /b %errorlevel%
+    )
+)
+
 node scripts/dashboard-server.js
 
 if %errorlevel% neq 0 (

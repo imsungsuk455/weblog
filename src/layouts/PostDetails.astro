@@ -32,6 +32,7 @@ const {
   modDatetime,
   timezone,
   tags,
+  category,
   hideEditPost,
 } = post.data;
 
@@ -98,6 +99,15 @@ const nextPost =
     </h1>
     <div class="my-2 flex items-center gap-2">
       <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
+      {
+        category && (
+          <div class="flex items-center gap-1.5 opacity-80 decoration-dashed underline-offset-4">
+            <span class="max-sm:hidden">|</span>
+            <span class="sr-only">Category:</span>
+            <span class="font-medium text-accent italic">{category}</span>
+          </div>
+        )
+      }
       <span
         aria-hidden="true"
         class:list={[

@@ -22,6 +22,13 @@ const { title, description, ...props } = data;
       "focus-visible:no-underline focus-visible:underline-offset-0",
     ]}
   >
+    {
+      data.category && (
+        <span class="mb-1 block text-sm font-medium text-accent/80 italic">
+          {data.category}
+        </span>
+      )
+    }
     <Heading
       style={{ viewTransitionName: slugifyStr(title.replaceAll(".", "-")) }}
     >

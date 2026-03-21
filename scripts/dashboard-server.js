@@ -24,6 +24,8 @@ app.post("/api/generate", async (req, res) => {
     return res.status(400).json({ error: "Topic is required" });
   }
 
+  const { category = "General" } = req.body;
+
   const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
   const pubDate = new Date().toISOString();
 
@@ -40,6 +42,7 @@ app.post("/api/generate", async (req, res) => {
     tags:
       - [tag1]
       - [tag2]
+    category: ${category}
     description: [A short, engaging description of the post]
     ---
 
@@ -136,6 +139,29 @@ app.get("/api/posts", (req, res) => {
       .sort((a, b) => b.mtime - a.mtime)
       .slice(0, 10); // Latest 10
     res.json({ posts: files });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API route to list categories
+app.get("/api/categories", (req, res) => {
+  const blogDir = path.join(process.cwd(), "src/data/blog");
+  try {
+    if (!fs.existsSync(blogDir)) return res.json({ categories: ["General"] });
+    
+    const files = fs.readdirSync(blogDir).filter(f => f.endsWith(".md"));
+    const categories = new Set(["General"]);
+    
+    files.forEach(f => {
+      const content = fs.readFileSync(path.join(blogDir, f), "utf8");
+      const match = content.match(/category:\s*(.*)/);
+      if (match && match[1]) {
+        categories.add(match[1].trim().replace(/['"]/g, ""));
+      }
+    });
+    
+    res.json({ categories: Array.from(categories) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

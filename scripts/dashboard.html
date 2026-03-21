@@ -409,8 +409,13 @@
         <section id="view-writer" class="view-content">
             <div class="section-card">
                 <div class="input-group">
-                    <label for="topic">글 주제 (Topic)</label>
                     <input type="text" id="topic" placeholder="예: 2026년 개발 트렌드 5가지">
+                </div>
+
+                <div class="input-group">
+                    <label for="category">카테고리 (Category)</label>
+                    <input type="text" id="category" placeholder="예: IT/Tech, 일상, 맛집 등" value="General">
+                    <div id="existing-categories" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;"></div>
                 </div>
                 
                 <button id="generate-btn" class="btn">
@@ -635,10 +640,12 @@
             editorContainer.style.display = 'none';
 
             try {
+                const category = document.getElementById('category').value.trim() || "General";
+
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic })
+                    body: JSON.stringify({ topic, category })
                 });
 
                 const data = await response.json();
@@ -655,6 +662,28 @@
                 genText.innerText = 'AI 글 생성하기';
             }
         });
+
+        // Load Categories
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/categories');
+                const { categories = [] } = await res.json();
+                const container = document.getElementById('existing-categories');
+                if (!container) return;
+                
+                container.innerHTML = categories.map(cat => `
+                    <span class="cat-pill" style="font-size: 0.75rem; background: #E5E7EB; padding: 4px 8px; border-radius: 999px; cursor: pointer; transition: all 0.2s;" onclick="setCategory('${cat}')">
+                        ${cat}
+                    </span>
+                `).join('');
+            } catch (err) {
+                console.error('Failed to load categories:', err);
+            }
+        }
+
+        function setCategory(cat) {
+            document.getElementById('category').value = cat;
+        }
 
         // Save Logic
         const saveBtn = document.getElementById('save-btn');
@@ -691,6 +720,7 @@
 
         // Initial Load
         loadData();
+        loadCategories();
     </script>
 </body>
 </html>
