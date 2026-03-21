@@ -1,5 +1,5 @@
 export const SITE = {
-  website: "https://drnomad.pages.dev/", // replace this with your deployed domain
+  website: "https://doctornomad.org/", // replace this with your deployed domain
   author: "닥터노마드(Dr. Nomad)",
   profile: "/",
   desc: "쏟아지는 경제 기사와 코인 시황 속에서 진짜 필요한 정보만 노트에 필기하듯 깔끔하게 정리해 드립니다. 투자의 기준이 되는 팩트와 인사이트를 만나보세요.",
@@ -14,7 +14,7 @@ export const SITE = {
   editPost: {
     enabled: true,
     text: "페이지 수정",
-    url: "https://github.com/satnaing/astro-paper/edit/main/",
+    url: "https://github.com/imsungsuk455/weblog/edit/main/",
   },
   dynamicOgImage: true,
   dir: "ltr", // "rtl" | "auto"
