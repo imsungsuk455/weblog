@@ -138,6 +138,36 @@ app.post("/api/save", (req, res) => {
   }
 });
 
+// API route to get a specific post content
+app.get("/api/posts/:fileName", (req, res) => {
+  const { fileName } = req.params;
+  const filePath = path.join(process.cwd(), "src/data/blog", fileName);
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, "utf8");
+      res.json({ content });
+    } else { res.status(404).json({ error: "게시물을 찾을 수 없습니다." }); }
+  } catch (err) { res.status(500).json({ error: "게시물 조회 실패: " + err.message }); }
+});
+
+// API route to delete a post
+app.delete("/api/posts/:fileName", (req, res) => {
+  const { fileName } = req.params;
+  const filePath = path.join(process.cwd(), "src/data/blog", fileName);
+
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      res.json({ message: "게시물이 성공적으로 삭제되었습니다." });
+    } else {
+      res.status(404).json({ error: "게시물을 찾을 수 없습니다." });
+    }
+  } catch (err) {
+    console.error("Error deleting post:", err);
+    res.status(500).json({ error: "게시물 삭제 실패: " + err.message });
+  }
+});
+
 // API route to get stats
 app.get("/api/stats", (req, res) => {
   const blogDir = path.join(process.cwd(), "src/data/blog");

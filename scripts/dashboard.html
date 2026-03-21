@@ -259,6 +259,28 @@
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
+        .btn-danger {
+            background-color: #EF4444;
+            color: white;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background-color: #DC2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+
+        .post-actions button {
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
         .btn:disabled {
             background-color: #D1D5DB;
             cursor: not-allowed;
@@ -745,6 +767,7 @@
 
                 const renderPosts = (containerId) => {
                     const container = document.getElementById(containerId);
+                    if (!container) return;
                     if (posts.length === 0) {
                         container.innerHTML = '<p style="color: var(--text-muted);">아직 작성된 글이 없습니다.</p>';
                         return;
@@ -758,14 +781,18 @@
                             <div class="post-actions" style="display: flex; gap: 8px; align-items: center;">
                                 ${p.draft ? `
                                     <span class="badge" style="background: #FEE2E2; color: #991B1B;">임시저장</span>
-                                    <button class="btn" style="padding: 4px 8px; font-size: 0.75rem; background: var(--primary);" onclick="publishPost('${p.fileName}')">발행</button>
+                                    <button class="btn" onclick="publishPost('${p.fileName}')" title="발행">발행</button>
                                 ` : `
                                     <span class="badge" style="background: #D1FAE5; color: #065F46;">발행됨</span>
                                 `}
-                                <span style="font-size: 0.75rem; background: #E5E7EB; padding: 4px 8px; border-radius: 4px;">Markdown</span>
+                                <span style="font-size: 0.75rem; background: #E5E7EB; padding: 4px 8px; border-radius: 4px;">MD</span>
+                                <button class="btn btn-danger" onclick="deletePost('${p.fileName}')" title="삭제">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                </button>
                             </div>
                         </div>
                     `).join('');
+                    lucide.createIcons();
                 };
 
                 if (document.getElementById('recent-posts')) renderPosts('recent-posts');
@@ -1169,6 +1196,49 @@
             editorContainer.style.display = 'none';
             contentArea.value = '';
         });
+
+        async function publishPost(fileName) {
+            if (!confirm(`'${fileName}'을(를) 지금 바로 발행하시겠습니까?`)) return;
+
+            try {
+                // 특정 파일 내용 가져오기
+                const res = await fetch(`/api/posts/${fileName}`);
+                const { content } = await res.json();
+                
+                // draft 상태 변경
+                const updatedContent = content.replace(/draft:\s*true/g, 'draft: false');
+
+                const saveRes = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: updatedContent })
+                });
+
+                const data = await saveRes.json();
+                if (data.error) throw new Error(data.error);
+
+                notify(`게시물이 성공적으로 발행되었습니다.`, 'success');
+                loadData();
+            } catch (err) {
+                notify('발행 실패: ' + err.message, 'error');
+            }
+        }
+
+        async function deletePost(fileName) {
+            if (!confirm(`'${fileName}'을(를) 정말 삭제하시겠습니까?`)) return;
+
+            try {
+                const response = await fetch(`/api/posts/${fileName}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                notify(data.message, 'success');
+                loadData(); // 목록 새로고침
+            } catch (err) {
+                notify('삭제 실패: ' + err.message, 'error');
+            }
+        }
+
 
         // Initial Load
         loadData();
