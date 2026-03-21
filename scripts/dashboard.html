@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Blog Dashboard - Premium v3.1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #10B981;
+            --primary-light: #ECFDF5;
+            --primary-dark: #059669;
+            --bg: #F9FAFB;
+            --sidebar-bg: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        aside {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 0;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .logo {
+            padding: 0 24px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .menu-item {
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .menu-item:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .menu-item.active {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-right: 4px solid var(--primary);
+            font-weight: 600;
+        }
+
+        .menu-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            color: #9CA3AF;
+            padding: 24px 24px 8px;
+        }
+
+        /* Main Content Styles */
+        main {
+            flex: 1;
+            margin-left: 260px;
+            padding: 32px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        header h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+        }
+
+        .user-status {
+            background-color: white;
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Dashboard Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* View Content Animation */
+        .view-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .view-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 32px;
+            box-shadow: var(--shadow);
+        }
+
+        /* Form Controls */
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            font-size: 1rem;
+            background-color: #FDFDFD;
+            transition: var(--transition);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn:disabled {
+            background-color: #D1D5DB;
+            cursor: not-allowed;
+        }
+
+        /* Post Editor */
+        #editor-container {
+            margin-top: 32px;
+        }
+
+        textarea#content {
+            height: 500px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            line-height: 1.5;
+        }
+
+        /* Post Items List */
+        .post-list {
+            list-style: none;
+        }
+
+        .post-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .post-item:hover {
+            background-color: var(--bg);
+        }
+
+        .post-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .post-info p {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        /* Status UI */
+        #status-bar {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            display: none;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); }
+            to { transform: translateY(0); }
+        }
+
+        .success { background-color: var(--primary); }
+        .error { background-color: #EF4444; }
+
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <aside>
+        <div class="logo">
+            <i data-lucide="zap"></i>
+            <span>Blog AI</span>
+        </div>
+        
+        <div class="menu-label">Menu</div>
+        <a class="menu-item active" data-view="dashboard">
+            <i data-lucide="layout-dashboard"></i>
+            <span>대시보드</span>
+        </a>
+        <a class="menu-item" data-view="writer">
+            <i data-lucide="pen-tool"></i>
+            <span>AI 글쓰기</span>
+        </a>
+        <a class="menu-item" data-view="posts">
+            <i data-lucide="file-text"></i>
+            <span>글 목록</span>
+        </a>
+
+        <div class="menu-label">Settings</div>
+        <a class="menu-item" data-view="settings">
+            <i data-lucide="settings"></i>
+            <span>시스템 설정</span>
+        </a>
+        <a class="menu-item" href="https://github.com/satnaing/astro-paper" target="_blank">
+            <i data-lucide="external-link"></i>
+            <span>블로그 보기</span>
+        </a>
+    </aside>
+
+    <main>
+        <header>
+            <h1 id="view-title">대시보드 요약</h1>
+            <div class="user-status">
+                <span class="status-dot"></span>
+                <span>Gemini 3 Flash Connected</span>
+            </div>
+        </header>
+
+        <!-- View: Dashboard Home -->
+        <section id="view-dashboard" class="view-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="files"></i></div>
+                    <div class="stat-value" id="stat-total">0</div>
+                    <div class="stat-label">전체 발행물</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="edit-3"></i></div>
+                    <div class="stat-value" id="stat-drafts">0</div>
+                    <div class="stat-label">임시 저장 (Drafts)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #DBEAFE; color: #3B82F6;"><i data-lucide="eye"></i></div>
+                    <div class="stat-value">--</div>
+                    <div class="stat-label">사이트 방문자</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #FEF3C7; color: #F59E0B;"><i data-lucide="clock"></i></div>
+                    <div class="stat-value" id="stat-today">0</div>
+                    <div class="stat-label">오늘 생성된 글</div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h2 style="margin-bottom: 20px;">최근 생성된 글</h2>
+                <div id="recent-posts" class="post-list">
+                    <p style="color: var(--text-muted);">데이터를 불러오는 중...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: AI Writer -->
+        <section id="view-writer" class="view-content">
+            <div class="section-card">
+                <div class="input-group">
+                    <label for="topic">글 주제 (Topic)</label>
+                    <input type="text" id="topic" placeholder="예: 2026년 개발 트렌드 5가지">
+                </div>
+                
+                <button id="generate-btn" class="btn">
+                    <span class="loader" id="gen-loader"></span>
+                    <i data-lucide="sparkles"></i>
+                    <span id="gen-btn-text">AI 글 생성하기</span>
+                </button>
+
+                <div id="editor-container" style="display: none;">
+                    <label for="content">생성된 마크다운 내용 (검토 및 수정)</label>
+                    <textarea id="content"></textarea>
+                    <div style="margin-top: 20px; display: flex; gap: 12px;">
+                        <button id="save-btn" class="btn btn-success" style="background-color: var(--primary);">
+                            <i data-lucide="check-circle"></i> 게시물 저장
+                        </button>
+                        <button id="reset-btn" class="btn" style="background-color: #6B7280;">
+                            <i data-lucide="refresh-cw"></i> 초기화
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Posts -->
+        <section id="view-posts" class="view-content">
+            <div class="section-card">
+                <h2 style="margin-bottom: 20px;">전체 게시물 관리</h2>
+                <div id="all-posts-list" class="post-list">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Settings -->
+        <section id="view-settings" class="view-content">
+            <div class="section-card">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                    <div class="stat-icon" style="margin-bottom: 0; width: 40px; height: 40px;"><i data-lucide="key"></i></div>
+                    <h2 style="margin: 0;">API 설정 및 모델 정보</h2>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 24px;">Gemini 3 Flash 모델 사용을 위한 API 키를 관리합니다.</p>
+                
+                <div class="input-group">
+                    <label for="api-key-input">Gemini API Key</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="api-key-input" placeholder="새로운 API 키를 입력하세요 (AIza...)" style="flex: 1;">
+                        <button id="save-config-btn" class="btn">저장</button>
+                    </div>
+                    <p id="current-key-display" style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 8px;"></p>
+                </div>
+
+                <div class="input-group">
+                    <label>Active Model</label>
+                    <input type="text" value="gemini-3-flash" disabled style="background-color: #F3F4F6;">
+                </div>
+                
+                <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border);">
+                    <p style="font-size: 0.8125rem; color: var(--text-muted);">
+                        <i data-lucide="info" style="display: inline-block; vertical-align: middle; width: 14px; height: 14px; margin-right: 4px;"></i>
+                        설정된 API 키는 프로젝트 루트의 <code>.env</code> 파일에 자동으로 저장됩니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="status-bar"></div>
+
+    <script>
+        // Init Lucide
+        lucide.createIcons();
+
+        // Router / View Switcher
+        const menuItems = document.querySelectorAll('.menu-item');
+        const views = document.querySelectorAll('.view-content');
+        const viewTitle = document.getElementById('view-title');
+
+        const viewTitles = {
+            'dashboard': '대시보드 요약',
+            'writer': 'AI 글쓰기 도구',
+            'posts': '게시물 관리',
+            'settings': '시스템 설정'
+        };
+
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const targetView = item.getAttribute('data-view');
+                if (!targetView) return;
+
+                // Sync UI
+                menuItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                views.forEach(v => v.classList.remove('active'));
+                document.getElementById('view-' + targetView).classList.add('active');
+                
+                viewTitle.innerText = viewTitles[targetView] || '대시보드';
+
+                if (targetView === 'dashboard' || targetView === 'posts') {
+                    loadData();
+                }
+                if (targetView === 'settings') {
+                    loadConfig();
+                }
+            });
+        });
+
+        // Config Management
+        const apiKeyInput = document.getElementById('api-key-input');
+        const saveConfigBtn = document.getElementById('save-config-btn');
+        const keyDisplay = document.getElementById('current-key-display');
+
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/config');
+                const data = await res.json();
+                if (data.apiKey) {
+                    keyDisplay.innerHTML = `현재 설정된 키: <strong>${data.apiKey}</strong>`;
+                } else {
+                    keyDisplay.innerHTML = `현재 설정된 키가 없습니다.`;
+                }
+            } catch (err) {
+                console.error('Failed to load config:', err);
+            }
+        }
+
+        saveConfigBtn.addEventListener('click', async () => {
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                notify('API 키를 입력해 주세요.', 'error');
+                return;
+            }
+
+            saveConfigBtn.disabled = true;
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                notify(data.message, 'success');
+                apiKeyInput.value = '';
+                loadConfig();
+            } catch (err) {
+                notify('오류 발생: ' + err.message, 'error');
+            } finally {
+                saveConfigBtn.disabled = false;
+            }
+        });
+
+        // Notify helper
+        function notify(msg, type = 'success') {
+            const bar = document.getElementById('status-bar');
+            bar.innerText = msg;
+            bar.className = type;
+            bar.style.display = 'block';
+            setTimeout(() => { bar.style.display = 'none'; }, 4000);
+        }
+
+        // Data Loading
+        async function loadData() {
+            try {
+                // Load Stats
+                const statsRes = await fetch('/api/stats');
+                const stats = await statsRes.json();
+                document.getElementById('stat-total').innerText = stats.total || 0;
+                document.getElementById('stat-drafts').innerText = stats.drafts || 0;
+
+                // Load Posts
+                const postsRes = await fetch('/api/posts');
+                const { posts } = await postsRes.json();
+                
+                const renderPosts = (containerId) => {
+                    const container = document.getElementById(containerId);
+                    if (posts.length === 0) {
+                        container.innerHTML = '<p style="color: var(--text-muted);">아직 작성된 글이 없습니다.</p>';
+                        return;
+                    }
+                    container.innerHTML = posts.map(p => `
+                        <div class="post-item">
+                            <div class="post-info">
+                                <h3>${p.fileName}</h3>
+                                <p>수정일: ${new Date(p.mtime).toLocaleString('ko-KR')}</p>
+                            </div>
+                            <div class="post-badges">
+                                <span style="font-size: 0.75rem; background: #E5E7EB; padding: 4px 8px; border-radius: 4px;">Markdown</span>
+                            </div>
+                        </div>
+                    `).join('');
+                };
+
+                if (document.getElementById('recent-posts')) renderPosts('recent-posts');
+                if (document.getElementById('all-posts-list')) renderPosts('all-posts-list');
+
+            } catch (err) {
+                console.error('Failed to load data:', err);
+            }
+        }
+
+        // AI Generation Logic
+        const topicInput = document.getElementById('topic');
+        const genBtn = document.getElementById('generate-btn');
+        const genText = document.getElementById('gen-btn-text');
+        const genLoader = document.getElementById('gen-loader');
+        const editorContainer = document.getElementById('editor-container');
+        const contentArea = document.getElementById('content');
+
+        genBtn.addEventListener('click', async () => {
+            const topic = topicInput.value.trim();
+            if (!topic) {
+                notify('글 주제를 입력해 주세요.', 'error');
+                return;
+            }
+
+            genBtn.disabled = true;
+            genLoader.style.display = 'inline-block';
+            genText.innerText = 'AI가 글을 작성하고 있습니다...';
+            editorContainer.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                contentArea.value = data.content;
+                editorContainer.style.display = 'block';
+                notify('AI 글 작성이 완료되었습니다!', 'success');
+            } catch (err) {
+                notify('오류 발생: ' + err.message, 'error');
+            } finally {
+                genBtn.disabled = false;
+                genLoader.style.display = 'none';
+                genText.innerText = 'AI 글 생성하기';
+            }
+        });
+
+        // Save Logic
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.addEventListener('click', async () => {
+            const content = contentArea.value.trim();
+            if (!content) return;
+
+            saveBtn.disabled = true;
+            try {
+                const response = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                notify('게시물이 성공적으로 저장되었습니다: ' + data.fileName, 'success');
+                loadData();
+            } catch (err) {
+                notify('오류: ' + err.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+            }
+        });
+
+        const resetBtn = document.getElementById('reset-btn');
+        resetBtn.addEventListener('click', () => {
+            topicInput.value = '';
+            editorContainer.style.display = 'none';
+            contentArea.value = '';
+        });
+
+        // Initial Load
+        loadData();
+    </script>
+</body>
+</html>
