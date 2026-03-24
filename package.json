@@ -4,7 +4,7 @@
   "version": "5.5.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build && pagefind --site dist && xcopy /E /I /Y dist\\pagefind public\\pagefind",
+    "build": "astro check && astro build && pagefind --site dist && cp -r dist/pagefind public/pagefind",
     "preview": "astro preview",
     "sync": "astro sync",
     "astro": "astro",
