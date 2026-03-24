@@ -4,7 +4,7 @@
   "version": "5.5.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build && pagefind --site dist && cp -r dist/pagefind public/",
+    "build": "astro check && astro build && pagefind --site dist && xcopy /E /I /Y dist\\pagefind public\\pagefind",
     "preview": "astro preview",
     "sync": "astro sync",
     "astro": "astro",
@@ -21,6 +21,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.16.6",
     "body-parser": "^2.2.2",
+    "canvas": "^3.2.2",
     "cors": "^2.8.6",
     "dayjs": "^1.11.19",
     "dotenv": "^17.3.1",

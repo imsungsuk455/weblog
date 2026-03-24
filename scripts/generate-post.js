@@ -37,7 +37,13 @@ async function generatePost() {
     ---
 
     [The post content in Markdown, with headings, lists, and clear explanations.]
-    
+
+    IMPORTANT:
+    - Do NOT include ogImage in the frontmatter
+    - Do NOT include any image references like ![...](/assets/...) or ![...](https://...)
+    - Do NOT include any image markdown syntax
+    - Only use text, headings, lists, code blocks, and tables
+
     Return only the markdown content, no extra text.
   `;
 

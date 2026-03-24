@@ -1,0 +1,39 @@
+name: 예약 글 자동 발행
+
+on:
+  schedule:
+    # 매일 한국시간 기준: 9시, 12시, 15시, 18시, 21시 (UTC+9 → UTC로 변환)
+    - cron: '0 0 * * *'   # KST 09:00
+    - cron: '0 3 * * *'   # KST 12:00
+    - cron: '0 6 * * *'   # KST 15:00
+    - cron: '0 9 * * *'   # KST 18:00
+    - cron: '0 12 * * *'  # KST 21:00
+  workflow_dispatch: # 대시보드에서 수동 실행 가능
+
+jobs:
+  publish-scheduled-posts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 예약 글 확인 및 발행
+        id: check
+        run: node scripts/check-schedule.js
+
+      - name: 변경사항 커밋 & 푸시
+        if: steps.check.outputs.published_count > 0
+        run: |
+          git config user.name "Schedule Bot"
+          git config user.email "bot@doctornomad.org"
+          git add src/data/blog/
+          git commit -m "chore: 예약 글 자동 발행 (${{ steps.check.outputs.published_titles }})"
+          git push
