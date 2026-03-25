@@ -37,7 +37,7 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
     {
       recentPosts.length > 0 && (
         <section id="recent-posts" class="pb-12">
-          <div class="flex items-center justify-between mb-8">
+          <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold tracking-tight text-foreground flex items-center gap-3">
                 <span class="w-8 h-1 bg-accent rounded-full"></span>
                 최신 포스트
@@ -46,7 +46,7 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
                 전체 보기
             </LinkButton>
           </div>
-          <ul class="grid grid-cols-1 gap-6">
+          <ul class="grid grid-cols-1 gap-3">
             {recentPosts.map(
               (data, index) =>
                 index < SITE.postPerIndex && (

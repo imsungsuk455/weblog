@@ -13,10 +13,10 @@ const { variant: Heading = "h2", id, data, filePath } = Astro.props;
 const { title, description, ...props } = data;
 ---
 
-<li class="my-8 group">
+<li class="my-2 group">
   <a
     href={getPath(id, filePath)}
-    class="flex flex-col sm:flex-row gap-6 p-6 rounded-3xl bg-white dark:bg-slate-900 border border-border shadow-sm hover:shadow-xl hover:shadow-accent/5 transition-all duration-300"
+    class="flex flex-col sm:flex-row gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-border shadow-sm hover:shadow-xl hover:shadow-accent/5 transition-all duration-300"
   >
     {
       data.ogImage && (
