@@ -276,19 +276,26 @@ app.get("/api/stats", (req, res) => {
   const blogDir = path.join(process.cwd(), "src/data/blog");
   try {
     if (!fs.existsSync(blogDir)) {
-      return res.json({ total: 0, drafts: 0, published: 0 });
+      return res.json({ total: 0, drafts: 0, scheduled: 0, published: 0 });
     }
     const files = fs.readdirSync(blogDir).filter(f => f.endsWith(".md"));
-    let drafts = 0;
+    const now = new Date();
+    let drafts = 0, scheduled = 0, published = 0;
     files.forEach(f => {
       const content = fs.readFileSync(path.join(blogDir, f), "utf8");
-      if (content.includes("draft: true")) drafts++;
+      const draftMatch = content.match(/draft:\s*(true|false)/);
+      const pubMatch = content.match(/pubDatetime:\s*(.*)/);
+      const isDraft = draftMatch ? draftMatch[1] === "true" : false;
+      const pubDatetime = pubMatch ? new Date(pubMatch[1].trim()) : null;
+      if (isDraft) {
+        drafts++;
+      } else if (pubDatetime && pubDatetime > now) {
+        scheduled++;
+      } else {
+        published++;
+      }
     });
-    res.json({
-      total: files.length,
-      drafts: drafts,
-      published: files.length - drafts
-    });
+    res.json({ total: files.length, drafts, scheduled, published });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -299,6 +306,7 @@ app.get("/api/posts", (req, res) => {
   const blogDir = path.join(process.cwd(), "src/data/blog");
   try {
     if (!fs.existsSync(blogDir)) return res.json({ posts: [] });
+    const now = new Date();
     const files = fs.readdirSync(blogDir)
       .filter(f => f.endsWith(".md"))
       .map(f => {
@@ -307,14 +315,31 @@ app.get("/api/posts", (req, res) => {
         const content = fs.readFileSync(filePath, "utf8");
         const draftMatch = content.match(/draft:\s*(true|false)/);
         const pubMatch = content.match(/pubDatetime:\s*(.*)/);
+        const titleMatch = content.match(/^title:\s*["']?(.+?)["']?$/m);
+        const isDraft = draftMatch ? draftMatch[1] === "true" : false;
+        const pubDatetime = pubMatch ? pubMatch[1].trim() : null;
+        // 상태 판정:
+        // draft: true → 임시저장
+        // draft: false + 미래 pubDatetime → 예약됨 (Cloudflare 빌드 시 노출)
+        // draft: false + 과거/현재 pubDatetime → 발행됨
+        let status;
+        if (isDraft) {
+          status = "draft";
+        } else if (pubDatetime && new Date(pubDatetime) > now) {
+          status = "scheduled";
+        } else {
+          status = "published";
+        }
         return {
           fileName: f,
+          title: titleMatch ? titleMatch[1].trim() : f,
           mtime: stats.mtime,
-          draft: draftMatch ? draftMatch[1] === "true" : false,
-          pubDatetime: pubMatch ? pubMatch[1].trim() : null
+          draft: isDraft,
+          pubDatetime,
+          status
         };
       })
-      .sort((a, b) => b.mtime - a.mtime);
+      .sort((a, b) => new Date(b.pubDatetime || b.mtime) - new Date(a.pubDatetime || a.mtime));
     res.json({ posts: files });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -672,38 +697,25 @@ app.post("/api/start-jisikin", (req, res) => {
   }
 });
 
-// ── 수동 예약 발행 체크 ──
-app.post("/api/check-schedule", (req, res) => {
-  const blogDir = path.join(process.cwd(), "src/data/blog");
-  const now = new Date();
-  const published = [];
-
+// ── Cloudflare 빌드 수동 트리거 ──
+// draft 필드를 변경하지 않고 Cloudflare Deploy Hook을 호출해 재빌드를 요청합니다.
+// postFilter.ts가 빌드 시점의 현재 시간 기준으로 pubDatetime을 필터링하므로
+// 재빌드만으로 예약된 글이 자동 노출됩니다.
+app.post("/api/check-schedule", async (_req, res) => {
+  const hookUrl = process.env.CF_DEPLOY_HOOK_URL;
+  if (!hookUrl) {
+    return res.status(500).json({
+      error: "CF_DEPLOY_HOOK_URL 환경변수가 설정되지 않았습니다. .env 파일을 확인하세요."
+    });
+  }
   try {
-    const files = fs.readdirSync(blogDir).filter(f => f.endsWith(".md"));
-
-    for (const file of files) {
-      const filePath = path.join(blogDir, file);
-      let content = fs.readFileSync(filePath, "utf8");
-
-      const draftMatch = content.match(/^draft:\s*(true|false)/m);
-      if (!draftMatch || draftMatch[1] !== "true") continue;
-
-      const pubMatch = content.match(/^pubDatetime:\s*(.+)/m);
-      if (!pubMatch) continue;
-
-      const pubDatetime = new Date(pubMatch[1].trim());
-      if (isNaN(pubDatetime.getTime()) || pubDatetime > now) continue;
-
-      content = content.replace(/^draft:\s*true/m, "draft: false");
-      fs.writeFileSync(filePath, content, "utf8");
-
-      const titleMatch = content.match(/^title:\s*["']?(.+?)["']?$/m);
-      published.push(titleMatch ? titleMatch[1].trim() : file);
+    const response = await fetch(hookUrl, { method: "POST" });
+    if (!response.ok) {
+      return res.status(502).json({ error: `Cloudflare 빌드 트리거 실패: HTTP ${response.status}` });
     }
-
-    res.json({ published });
+    res.json({ triggered: true, message: "Cloudflare 빌드가 트리거되었습니다. 약 1~2분 후 배포됩니다." });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "빌드 트리거 오류: " + err.message });
   }
 });
 

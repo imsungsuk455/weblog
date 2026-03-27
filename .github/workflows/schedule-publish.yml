@@ -1,4 +1,4 @@
-name: 예약 글 자동 발행
+name: 예약 빌드 트리거
 
 on:
   schedule:
@@ -8,32 +8,18 @@ on:
     - cron: '0 6 * * *'   # KST 15:00
     - cron: '0 9 * * *'   # KST 18:00
     - cron: '0 12 * * *'  # KST 21:00
-  workflow_dispatch: # 대시보드에서 수동 실행 가능
+  workflow_dispatch: # GitHub UI 또는 대시보드에서 수동 실행 가능
 
 jobs:
-  publish-scheduled-posts:
+  trigger-build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: 저장소 체크아웃
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_PAT }}
-
-      - name: Node.js 설정
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: 예약 글 확인 및 발행
-        id: check
-        run: node scripts/check-schedule.js
-
-      - name: 변경사항 커밋 & 푸시
-        if: steps.check.outputs.published_count > 0
+      - name: Cloudflare Pages 빌드 트리거
         run: |
-          git config user.name "Schedule Bot"
-          git config user.email "bot@doctornomad.org"
-          git add src/data/blog/
-          git commit -m "chore: 예약 글 자동 발행 (${{ steps.check.outputs.published_titles }})"
-          git push
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.CF_DEPLOY_HOOK_URL }}")
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Cloudflare 빌드 트리거 성공 (HTTP $HTTP_STATUS)"
+          else
+            echo "❌ Cloudflare 빌드 트리거 실패 (HTTP $HTTP_STATUS)"
+            exit 1
+          fi

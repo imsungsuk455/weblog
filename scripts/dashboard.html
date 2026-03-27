@@ -511,6 +511,11 @@
                     <div class="stat-label">임시 저장 (Drafts)</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #FEF3C7; color: #D97706;"><i data-lucide="clock"></i></div>
+                    <div class="stat-value" id="stat-scheduled">0</div>
+                    <div class="stat-label">예약됨 (Scheduled)</div>
+                </div>
+                <div class="stat-card">
                     <div class="stat-icon" style="background-color: #DBEAFE; color: #3B82F6;"><i data-lucide="eye"></i>
                     </div>
                     <div class="stat-value">--</div>
@@ -1141,20 +1146,22 @@
                 <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                         <div class="stat-icon" style="margin-bottom: 0; width: 32px; height: 32px; background: #EFF6FF; color: #3B82F6;"><i data-lucide="clock" style="width: 16px; height: 16px;"></i></div>
-                        <h3 style="margin: 0; font-size: 1rem;">예약 발행 자동화 (GitHub Actions)</h3>
+                        <h3 style="margin: 0; font-size: 1rem;">예약 발행 자동화 (Cloudflare Deploy Hook)</h3>
                     </div>
                     <p style="font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.7;">
-                        매일 KST 9시·12시·15시·18시·21시에 GitHub Actions가 자동으로 예약 글을 발행합니다.<br>
-                        <strong>1회 설정 필요:</strong> GitHub 저장소 → Settings → Secrets → <code>GH_PAT</code> 에 Personal Access Token 등록
+                        매일 KST 9시·12시·15시·18시·21시에 GitHub Actions가 Cloudflare 빌드를 트리거합니다.<br>
+                        <code>draft: false</code> + 미래 <code>pubDatetime</code>으로 저장하면, 해당 시간 이후 빌드 시 자동 노출됩니다.<br>
+                        <strong>1회 설정 필요:</strong> Cloudflare Pages → Settings → Deploy Hooks에서 Hook URL 발급 후 GitHub Secrets에 <code>CF_DEPLOY_HOOK_URL</code>로 등록
                     </p>
                     <div style="background: #F8FAFC; border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; font-size: 0.8125rem; margin-bottom: 16px;">
-                        <div style="font-weight: 600; margin-bottom: 8px; color: var(--text-main);">Personal Access Token 발급 방법</div>
+                        <div style="font-weight: 600; margin-bottom: 8px; color: var(--text-main);">Deploy Hook 설정 방법</div>
                         <ol style="padding-left: 18px; line-height: 2; color: var(--text-muted);">
-                            <li>github.com → 우측 상단 프로필 → Settings</li>
-                            <li>Developer settings → Personal access tokens → Tokens (classic)</li>
-                            <li>Generate new token → <strong>repo</strong> 권한 체크 → 생성</li>
-                            <li>저장소 <code>imsungsuk455/weblog</code> → Settings → Secrets and variables → Actions</li>
-                            <li>New secret: 이름 <code>GH_PAT</code>, 값에 토큰 붙여넣기</li>
+                            <li>Cloudflare 대시보드 → Workers &amp; Pages → weblog 프로젝트 클릭</li>
+                            <li>Settings → Builds &amp; Deployments → Deploy Hooks → <strong>Add Deploy Hook</strong></li>
+                            <li>Hook 이름: <code>schedule-trigger</code>, 브랜치: <code>main</code> → URL 복사</li>
+                            <li>GitHub 저장소 → Settings → Secrets and variables → Actions</li>
+                            <li>New secret: 이름 <code>CF_DEPLOY_HOOK_URL</code>, 값에 Hook URL 붙여넣기</li>
+                            <li>로컬 <code>.env</code> 파일에도 <code>CF_DEPLOY_HOOK_URL=&lt;URL&gt;</code> 추가 (아래 버튼 사용 시 필요)</li>
                         </ol>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -1164,7 +1171,7 @@
                         </a>
                         <button id="manual-schedule-check-btn" class="btn" style="font-size: 0.875rem; padding: 10px 18px; background: white; color: var(--text-main); border: 1px solid var(--border);">
                             <i data-lucide="play" style="width: 15px; height: 15px;"></i>
-                            지금 바로 발행 체크
+                            지금 바로 빌드 트리거
                         </button>
                     </div>
                     <div id="manual-check-result" style="display: none; margin-top: 12px; padding: 12px 16px; border-radius: 10px; font-size: 0.875rem;"></div>
@@ -1383,6 +1390,7 @@
                 const stats = await statsRes.json();
                 document.getElementById('stat-total').innerText = stats.total || 0;
                 document.getElementById('stat-drafts').innerText = stats.drafts || 0;
+                document.getElementById('stat-scheduled').innerText = stats.scheduled || 0;
 
                 // Load Posts
                 const postsRes = await fetch('/api/posts');
@@ -1402,9 +1410,12 @@
                                 <p>발행일: ${p.pubDatetime ? new Date(p.pubDatetime).toLocaleString('ko-KR') : '알 수 없음'}</p>
                             </div>
                             <div class="post-actions" style="display: flex; gap: 8px; align-items: center;">
-                                ${p.draft ? `
+                                ${p.status === 'draft' ? `
                                     <span class="badge" style="background: #FEE2E2; color: #991B1B;">임시저장</span>
                                     <button class="btn" onclick="publishPost('${p.fileName.replace(/'/g, "\\'")}')" title="발행">발행</button>
+                                ` : p.status === 'scheduled' ? `
+                                    <span class="badge" style="background: #FEF3C7; color: #92400E;">예약됨</span>
+                                    <span style="font-size: 0.75rem; color: #92400E;">${new Date(p.pubDatetime).toLocaleString('ko-KR')} 발행 예정</span>
                                 ` : `
                                     <span class="badge" style="background: #D1FAE5; color: #065F46;">발행됨</span>
                                 `}
@@ -2142,32 +2153,31 @@
             if (e.key === 'Enter') document.getElementById('keyword-search-btn').click();
         });
 
-        // ── 수동 예약 발행 체크 ──
+        // ── Cloudflare 빌드 수동 트리거 ──
         document.getElementById('manual-schedule-check-btn').addEventListener('click', async () => {
             const btn = document.getElementById('manual-schedule-check-btn');
             const result = document.getElementById('manual-check-result');
             btn.disabled = true;
-            btn.innerHTML = '<span class="loader" style="display:inline-block;"></span> 확인 중...';
+            btn.innerHTML = '<span class="loader" style="display:inline-block;"></span> 트리거 중...';
             result.style.display = 'none';
             try {
                 const res = await fetch('/api/check-schedule', { method: 'POST' });
                 const data = await res.json();
                 result.style.display = 'block';
-                if (data.published && data.published.length > 0) {
+                if (data.triggered) {
                     result.style.cssText = 'display:block;margin-top:12px;padding:12px 16px;border-radius:10px;font-size:0.875rem;background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;';
-                    result.innerHTML = `<strong>✅ ${data.published.length}개 글 발행됨</strong><br>${data.published.join('<br>')}`;
-                    notify(`${data.published.length}개 예약 글이 발행되었습니다.`, 'success');
-                    loadData();
+                    result.innerHTML = `<strong>✅ ${data.message}</strong>`;
+                    notify('Cloudflare 빌드가 트리거되었습니다.', 'success');
                 } else {
-                    result.style.cssText = 'display:block;margin-top:12px;padding:12px 16px;border-radius:10px;font-size:0.875rem;background:#F3F4F6;border:1px solid var(--border);color:var(--text-muted);';
-                    result.innerHTML = '📭 현재 발행할 예약 글이 없습니다.';
+                    result.style.cssText = 'display:block;margin-top:12px;padding:12px 16px;border-radius:10px;font-size:0.875rem;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;';
+                    result.innerHTML = `❌ ${data.error || '빌드 트리거 실패'}`;
                 }
             } catch (err) {
                 result.style.cssText = 'display:block;margin-top:12px;padding:12px 16px;border-radius:10px;font-size:0.875rem;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;';
                 result.innerHTML = `❌ 오류: ${err.message}`;
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="play" style="width:15px;height:15px;display:inline-block;vertical-align:middle;margin-right:6px;"></i>지금 바로 발행 체크';
+                btn.innerHTML = '<i data-lucide="play" style="width:15px;height:15px;display:inline-block;vertical-align:middle;margin-right:6px;"></i>지금 바로 빌드 트리거';
                 lucide.createIcons();
             }
         });
