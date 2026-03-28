@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import open from "open";
 import { spawn } from "child_process";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -233,7 +234,7 @@ app.post("/api/save", async (req, res) => {
       }
     }
 
-    fs.writeFileSync(filePath, fixedContent);
+    fs.writeFileSync(filePath, fixedContent, { encoding: "utf8" });
     res.json({ message: "Post saved successfully", fileName });
   } catch (error) {
     console.error("Error saving post:", error);
@@ -639,7 +640,7 @@ app.post("/api/process-thumbnail", async (req, res) => {
 });
 
 // API route to publish existing draft
-app.post("/api/publish", (req, res) => {
+app.post("/api/publish", async (req, res) => {
   const { fileName } = req.body;
   if (!fileName) return res.status(400).json({ error: "Filename is required" });
 
@@ -653,9 +654,20 @@ app.post("/api/publish", (req, res) => {
 
     let content = fs.readFileSync(filePath, "utf8");
     content = content.replace(/draft:\s*true/, "draft: false");
-    fs.writeFileSync(filePath, content);
+    fs.writeFileSync(filePath, content, { encoding: "utf8" });
 
-    res.json({ message: "게시물이 성공적으로 발행되었습니다." });
+    // git add, commit, push 자동 실행
+    const titleMatch = content.match(/^title:\s*["']?(.+?)["']?$/m);
+    const title = titleMatch ? titleMatch[1].trim() : fileName;
+    const { execSync } = await import("child_process");
+    try {
+      execSync(`git add "${filePath}"`, { cwd: process.cwd() });
+      execSync(`git commit -m "publish: ${title}"`, { cwd: process.cwd() });
+      execSync("git push", { cwd: process.cwd() });
+      res.json({ message: "게시물이 발행되고 GitHub에 push되었습니다." });
+    } catch (gitErr) {
+      res.json({ message: "게시물이 발행되었습니다. (git push 실패: " + gitErr.message + ")" });
+    }
   } catch (err) {
     res.status(500).json({ error: "발행 중 오류 발생: " + err.message });
   }
@@ -724,7 +736,7 @@ app.post("/api/check-schedule", async (_req, res) => {
 // 네이버 검색광고 API HMAC-SHA256 서명 생성
 function makeNaverAdSignature(timestamp, method, path, secret) {
   const message = `${timestamp}.${method}.${path}`;
-  return require("crypto").createHmac("sha256", secret).update(message).digest("base64");
+  return crypto.createHmac("sha256", secret).update(message).digest("base64");
 }
 
 // 키워드 검색량 + 관련 키워드 조회 (네이버 검색광고 API)

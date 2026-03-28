@@ -1832,15 +1832,16 @@
             }
 
             // Change draft status
-            // 예약 발행: 미래 날짜가 설정돼 있으면 draft: true 유지 (GitHub Actions가 나중에 발행)
+            // 예약 발행: 미래 날짜가 설정돼 있더라도 draft: false여야 
+            // Astro 빌드 시점에 pubDatetime 기반으로 노출 여부가 결정됩니다.
             if (isPublish) {
                 const isScheduled = pubDateInput && new Date(pubDateInput) > new Date();
                 if (isScheduled) {
-                    // draft: true 유지 — GitHub Actions가 예약 시간에 자동 발행
+                    // draft: false — Astro 빌드 시점에 날짜를 체크하여 자동 노출
                     if (!content.includes('draft:')) {
-                        content = content.replace(/^---\n/, '---\ndraft: true\n');
+                        content = content.replace(/^---\n/, '---\ndraft: false\n');
                     } else {
-                        content = content.replace(/draft:\s*false/, 'draft: true');
+                        content = content.replace(/draft:\s*true/, 'draft: false');
                     }
                 } else {
                     content = content.replace(/draft:\s*true/, 'draft: false');

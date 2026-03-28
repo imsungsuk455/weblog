@@ -66,7 +66,7 @@ async function generatePost() {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(filePath, text.trim());
+    fs.writeFileSync(filePath, text.trim(), { encoding: 'utf8' });
     console.log(`Successfully generated post: ${fileName}`);
   } catch (error) {
     console.error("Error generating post:", error);
