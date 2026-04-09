@@ -49,6 +49,7 @@
             padding: 24px 0;
             position: fixed;
             height: 100vh;
+            overflow-y: auto;
             z-index: 100;
         }
 
@@ -445,6 +446,15 @@
             <span>Blog AI</span>
         </div>
 
+        <div style="padding: 0 12px 12px;">
+            <label style="font-size:0.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:4px;">블로그 선택</label>
+            <select id="blog-selector" style="width:100%; padding:6px 8px; border-radius:8px; border:1px solid var(--border); background:var(--bg-secondary); color:var(--text-primary); font-size:0.8rem; cursor:pointer;">
+                <option value="weblog">weblog (현재)</option>
+                <option value="blog2">blog2</option>
+                <option value="blog3">blog3</option>
+            </select>
+        </div>
+
         <div class="menu-label">Menu</div>
         <a class="menu-item active" data-view="dashboard">
             <i data-lucide="layout-dashboard"></i>
@@ -457,6 +467,10 @@
         <a class="menu-item" data-view="writer">
             <i data-lucide="pen-tool"></i>
             <span>AI 글쓰기</span>
+        </a>
+        <a class="menu-item" data-view="bulk-writer">
+            <i data-lucide="layers"></i>
+            <span>대량 글쓰기</span>
         </a>
         <a class="menu-item" data-view="posts">
             <i data-lucide="file-text"></i>
@@ -482,7 +496,7 @@
             <i data-lucide="settings"></i>
             <span>시스템 설정</span>
         </a>
-        <a class="menu-item" href="http://localhost:4321" target="_blank">
+        <a class="menu-item" id="local-blog-link" href="http://localhost:4321" target="_blank">
             <i data-lucide="external-link"></i>
             <span>로컬 블로그 보기</span>
         </a>
@@ -661,6 +675,24 @@
                     <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">블로그 관리 탭에서 블로그를 추가할 수 있습니다.</p>
                 </div>
                 <div class="input-group">
+                    <label for="ai-model">AI 모델</label>
+                    <select id="ai-model" style="width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border); font-size: 1rem; background-color: #FDFDFD; color: var(--text-main); transition: var(--transition); appearance: none; background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns=%22http://www.w3.org/2020/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236B7280%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>'); background-repeat: no-repeat; background-position: right 16px center;">
+                        <option value="gemini-3-flash-preview">Gemini 3 Flash (기본)</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (대체)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="writing-style">글쓰기 스타일</label>
+                    <select id="writing-style" style="width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border); font-size: 1rem; background-color: #FDFDFD; color: var(--text-main); transition: var(--transition); appearance: none; background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236B7280%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>'); background-repeat: no-repeat; background-position: right 16px center;">
+                        <option value="info">정보 제공형 (기본) — 튜토리얼·설명 중심</option>
+                        <option value="ranking">랭킹형 — TOP N 순위 형식</option>
+                        <option value="comparison">비교형 — A vs B 장단점 구조</option>
+                        <option value="checklist">체크리스트형 — 단계별 항목 구성</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
                     <input type="text" id="topic" placeholder="예: 2026년 개발 트렌드 5가지">
                 </div>
 
@@ -672,10 +704,38 @@
                 </div>
 
                 <div class="input-group">
-                    <label for="pub-date">발행 일시 예약 (선택 사항)</label>
-                    <input type="datetime-local" id="pub-date">
-                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">비워두면 현재 시간이 자동으로 입력됩니다.
+                    <label>발행 모드</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 140px; transition: var(--transition);">
+                            <input type="radio" name="single-publish-mode" value="draft" checked style="accent-color: var(--primary);"> 임시 저장
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 140px; transition: var(--transition);">
+                            <input type="radio" name="single-publish-mode" value="now"> 즉시 발행
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 140px; transition: var(--transition);">
+                            <input type="radio" name="single-publish-mode" value="schedule"> 예약 발행
+                        </label>
+                    </div>
+                </div>
+
+                <div id="single-schedule-options" style="display: none;" class="input-group">
+                    <label for="pub-date">예약 일시</label>
+                    <input type="datetime-local" id="pub-date" style="width: 100%;">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">설정한 시간에 글이 발행됩니다.</p>
+                </div>
+
+                <div class="input-group" id="single-affiliate-section">
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <i data-lucide="shopping-cart" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                        제휴 링크 <span style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">(선택 사항)</span>
+                    </label>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+                        제품명과 링크를 각각 입력하세요. 쿠팡·아마존·알리 등 모든 제휴 링크 사용 가능합니다.
                     </p>
+                    <div id="single-affiliate-rows" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                    <button type="button" id="single-affiliate-add-btn" style="margin-top: 10px; display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; border: 1.5px dashed var(--primary); background: transparent; color: var(--primary); font-size: 0.85rem; cursor: pointer; font-weight: 500;">
+                        <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> 제휴 링크 추가
+                    </button>
                 </div>
 
                 <div class="input-group"
@@ -725,6 +785,173 @@
                             style="background-color: white; color: var(--text-muted); border: 1px solid var(--border);">
                             <i data-lucide="refresh-cw"></i> 초기화
                         </button>
+                        <button id="sns-convert-btn" class="btn" style="background-color: #7C3AED;">
+                            <i data-lucide="share-2"></i>
+                            <span>SNS 변환</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Bulk AI Writer -->
+        <section id="view-bulk-writer" class="view-content">
+            <div class="section-card">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                    <div class="stat-icon" style="margin-bottom: 0; width: 40px; height: 40px;"><i data-lucide="layers"></i></div>
+                    <div>
+                        <h2 style="margin: 0;">AI 대량 글쓰기</h2>
+                        <p style="color: var(--text-muted); margin: 4px 0 0; font-size: 0.85rem;">키워드를 줄바꿈으로 입력하면 최대 10개의 글을 자동 생성합니다.</p>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="bulk-target-blog">발행 블로그</label>
+                    <select id="bulk-target-blog" style="width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border); font-size: 1rem; background-color: #FDFDFD; color: var(--text-main); transition: var(--transition); appearance: none; background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236B7280%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>'); background-repeat: no-repeat; background-position: right 16px center;">
+                        <option value="weblog">Weblog</option>
+                        <option value="blog2">Blog2</option>
+                        <option value="blog3">Blog3</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="bulk-ai-model">AI 모델</label>
+                    <select id="bulk-ai-model" style="width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border); font-size: 1rem; background-color: #FDFDFD; color: var(--text-main); transition: var(--transition); appearance: none; background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236B7280%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>'); background-repeat: no-repeat; background-position: right 16px center;">
+                        <option value="gemini-3-flash-preview">Gemini 3 Flash (기본)</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (대체)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="bulk-writing-style">글쓰기 스타일</label>
+                    <select id="bulk-writing-style" style="width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border); font-size: 1rem; background-color: #FDFDFD; color: var(--text-main); transition: var(--transition); appearance: none; background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236B7280%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>'); background-repeat: no-repeat; background-position: right 16px center;">
+                        <option value="info">정보 제공형 (기본) — 튜토리얼·설명 중심</option>
+                        <option value="ranking">랭킹형 — TOP N 순위 형식</option>
+                        <option value="comparison">비교형 — A vs B 장단점 구조</option>
+                        <option value="checklist">체크리스트형 — 단계별 항목 구성</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="bulk-category">카테고리 (모든 글에 동일 적용)</label>
+                    <input type="text" id="bulk-category" placeholder="예: IT/Tech, 일상, 맛집 등" value="General">
+                    <div id="bulk-existing-categories" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                </div>
+
+                <div class="input-group">
+                    <label for="bulk-keywords">키워드 입력 <span id="bulk-keyword-count" style="color: var(--primary); font-weight: 600;">(0/10)</span></label>
+                    <textarea id="bulk-keywords" rows="8" placeholder="줄바꿈으로 키워드를 구분하세요 (최대 10개)&#10;&#10;예:&#10;2026년 개발 트렌드&#10;React vs Vue 비교&#10;파이썬 초보 가이드" style="width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border); font-size: 1rem; font-family: inherit; resize: vertical; line-height: 1.6;"></textarea>
+                    <p id="bulk-keyword-warning" style="font-size: 0.75rem; color: #EF4444; margin-top: 4px; display: none;">최대 10개까지만 입력 가능합니다.</p>
+                </div>
+
+                <div class="input-group">
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <i data-lucide="image" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                        본문 이미지 소스
+                    </label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 160px; transition: var(--transition);">
+                            <input type="radio" name="bulk-image-mode" value="unsplash" checked style="accent-color: var(--primary);"> Unsplash (기본)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 160px; transition: var(--transition);">
+                            <input type="radio" name="bulk-image-mode" value="serp" style="accent-color: var(--primary);"> Google 이미지 (SerpAPI)
+                        </label>
+                    </div>
+                    <p id="bulk-image-mode-hint" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; display: none;">
+                        키워드당 구글 이미지를 검색해 본문에 삽입합니다. SERPAPI_KEY가 설정된 경우에만 작동합니다.
+                    </p>
+                </div>
+
+                <div class="input-group">
+                    <label>발행 모드</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 140px; transition: var(--transition);">
+                            <input type="radio" name="bulk-publish-mode" value="draft" checked style="accent-color: var(--primary);"> 임시 저장
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 140px; transition: var(--transition);">
+                            <input type="radio" name="bulk-publish-mode" value="now"> 즉시 발행
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 140px; transition: var(--transition);">
+                            <input type="radio" name="bulk-publish-mode" value="schedule"> 일정 간격 예약
+                        </label>
+                    </div>
+                </div>
+
+                <div id="bulk-schedule-options" style="display: none;" class="input-group">
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="bulk-schedule-start">시작 일시</label>
+                            <input type="datetime-local" id="bulk-schedule-start" style="width: 100%;">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label for="bulk-schedule-interval">간격 (분)</label>
+                            <input type="number" id="bulk-schedule-interval" value="30" min="1" max="1440" style="width: 100%;">
+                        </div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;" id="bulk-schedule-preview"></p>
+                </div>
+
+                <div class="input-group" id="bulk-affiliate-section">
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <i data-lucide="shopping-cart" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                        제휴 링크 <span style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">(선택 사항 — 키워드별 개별 입력)</span>
+                    </label>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+                        각 키워드 글에 넣을 제휴 링크를 따로 입력하세요. (쿠팡, 아마존, 알리 등 모든 제휴 링크 가능)<br>
+                        형식: <code style="background: var(--bg); padding: 1px 6px; border-radius: 4px; font-size: 0.78rem;">제품명 | https://...</code> (한 줄에 하나씩, 비워도 됨)
+                    </p>
+                    <div id="bulk-affiliate-keyword-list" style="display: flex; flex-direction: column; gap: 12px;">
+                        <p id="bulk-affiliate-placeholder" style="font-size: 0.85rem; color: var(--text-muted); padding: 12px; background: var(--bg); border-radius: 10px; text-align: center;">위에서 키워드를 입력하면 여기에 키워드별 링크 입력칸이 생성됩니다.</p>
+                    </div>
+                </div>
+
+                <div class="input-group" style="padding: 24px; background: linear-gradient(135deg, var(--primary-light) 0%, #FFFFFF 100%); border-radius: 20px; border: 1px solid var(--primary-light);">
+                    <label style="color: var(--primary); display: flex; align-items: center; gap: 10px; font-size: 1.1rem; margin-bottom: 12px;">
+                        <i data-lucide="image-plus" style="width: 24px; height: 24px;"></i> 썸네일 설정
+                    </label>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 16px;">배경 이미지를 선택하면 각 글의 제목이 합성된 썸네일이 자동 생성됩니다.</p>
+                    <div id="bulk-thumbnail-preview-container" style="display: none; margin-bottom: 16px; position: relative; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow);">
+                        <img id="bulk-thumbnail-preview" src="" style="width: 100%; max-height: 200px; object-fit: cover; display: block;">
+                        <button id="bulk-remove-thumbnail-btn" style="position: absolute; top: 8px; right: 8px; background: rgba(239,68,68,0.9); border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer;">
+                            <i data-lucide="x" style="width: 14px; height: 14px;"></i> 제거
+                        </button>
+                    </div>
+                    <input type="file" id="bulk-thumbnail-file" accept="image/*" style="display: none;">
+                    <label for="bulk-thumbnail-file" class="btn" style="width: 100%; justify-content: center; background-color: white; color: var(--primary); border: 2px dashed var(--primary); padding: 16px; border-radius: 16px; cursor: pointer;">
+                        <i data-lucide="plus-circle"></i> 배경 이미지 선택 (선택 사항)
+                    </label>
+                </div>
+
+                <button id="bulk-generate-btn" class="btn" style="width: 100%; justify-content: center; font-size: 1.05rem; padding: 16px;">
+                    <span class="loader" id="bulk-gen-loader"></span>
+                    <i data-lucide="zap"></i>
+                    <span id="bulk-gen-btn-text">대량 생성 시작</span>
+                </button>
+
+                <!-- Progress Section -->
+                <div id="bulk-progress-section" style="display: none; margin-top: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="margin: 0;">생성 진행 상황</h3>
+                        <span id="bulk-progress-count" style="font-weight: 600; color: var(--primary);">0/0</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; margin-bottom: 16px;">
+                        <div id="bulk-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), #34D399); border-radius: 4px; transition: width 0.5s ease;"></div>
+                    </div>
+                    <div id="bulk-progress-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                </div>
+
+                <!-- Result Summary -->
+                <div id="bulk-result-section" style="display: none; margin-top: 24px; padding: 20px; border-radius: 16px; background: var(--bg);">
+                    <h3 style="margin: 0 0 12px;">생성 완료</h3>
+                    <div id="bulk-result-summary" style="display: flex; gap: 16px;">
+                        <div style="flex: 1; text-align: center; padding: 12px; background: #ECFDF5; border-radius: 12px;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #059669;" id="bulk-success-count">0</div>
+                            <div style="font-size: 0.8rem; color: #065F46;">성공</div>
+                        </div>
+                        <div style="flex: 1; text-align: center; padding: 12px; background: #FEF2F2; border-radius: 12px;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #DC2626;" id="bulk-fail-count">0</div>
+                            <div style="font-size: 0.8rem; color: #991B1B;">실패</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -786,60 +1013,41 @@
                 <!-- 채널 현황 카드 -->
                 <div class="stats-grid" style="margin-bottom: 32px;">
                     <div class="stat-card">
-                        <div class="stat-icon"><i data-lucide="youtube"></i></div>
-                        <div class="stat-value" style="font-size: 1.25rem;">YouTube</div>
-                        <div class="stat-label">연결 대기</div>
-                        <div style="margin-top: 12px;"><span style="display: inline-block; padding: 4px 10px; background: #FEF3C7; color: #D97706; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">미연결</span></div>
+                        <div class="stat-icon" style="background: #E8F5E9; color: #2DB400;"><i data-lucide="book-open"></i></div>
+                        <div class="stat-value" style="font-size: 1.25rem;">네이버 블로그</div>
+                        <div class="stat-label">포스팅 변환 지원</div>
+                        <div style="margin-top: 12px;"><span style="display: inline-block; padding: 4px 10px; background: #ECFDF5; color: #059669; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">변환 지원</span></div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background: #EFF6FF; color: #3B82F6;"><i data-lucide="twitter"></i></div>
-                        <div class="stat-value" style="font-size: 1.25rem;">X / Twitter</div>
-                        <div class="stat-label">연결 대기</div>
-                        <div style="margin-top: 12px;"><span style="display: inline-block; padding: 4px 10px; background: #FEF3C7; color: #D97706; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">미연결</span></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #FDF2F8; color: #EC4899;"><i data-lucide="instagram"></i></div>
-                        <div class="stat-value" style="font-size: 1.25rem;">Instagram</div>
-                        <div class="stat-label">연결 대기</div>
-                        <div style="margin-top: 12px;"><span style="display: inline-block; padding: 4px 10px; background: #FEF3C7; color: #D97706; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">미연결</span></div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #F0FDF4; color: #22C55E;"><i data-lucide="message-circle"></i></div>
-                        <div class="stat-value" style="font-size: 1.25rem;">카카오채널</div>
-                        <div class="stat-label">연결 대기</div>
-                        <div style="margin-top: 12px;"><span style="display: inline-block; padding: 4px 10px; background: #FEF3C7; color: #D97706; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">미연결</span></div>
+                        <div class="stat-icon" style="background: #111827; color: #F9FAFB;"><i data-lucide="at-sign"></i></div>
+                        <div class="stat-value" style="font-size: 1.25rem;">스레드 (Threads)</div>
+                        <div class="stat-label">포스팅 변환 지원</div>
+                        <div style="margin-top: 12px;"><span style="display: inline-block; padding: 4px 10px; background: #ECFDF5; color: #059669; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">변환 지원</span></div>
                     </div>
                 </div>
 
-                <!-- 포스트 자동 발행 -->
+                <!-- SNS 변환 안내 -->
                 <div class="section-card" style="margin-bottom: 24px;">
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                        <div class="stat-icon" style="margin-bottom: 0; width: 40px; height: 40px;"><i data-lucide="send"></i></div>
-                        <h3 style="margin: 0; font-size: 1.125rem;">포스트 자동 발행</h3>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div class="stat-icon" style="margin-bottom: 0; width: 40px; height: 40px;"><i data-lucide="share-2"></i></div>
+                        <h3 style="margin: 0; font-size: 1.125rem;">SNS 포스팅 변환</h3>
                     </div>
-                    <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.875rem;">새 블로그 글이 작성되면 연결된 채널에 자동으로 공유합니다. 채널 연결 후 활성화됩니다.</p>
+                    <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.875rem;">AI로 작성한 블로그 글을 각 SNS 플랫폼에 맞게 자동 변환합니다. AI 글쓰기 탭에서 글 생성 후 <strong>SNS 변환</strong> 버튼을 클릭하세요.</p>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <label style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; background: #FDFDFD;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <i data-lucide="youtube" style="width: 18px; height: 18px; color: #EF4444;"></i>
-                                <span style="font-weight: 500;">YouTube 커뮤니티</span>
+                        <div style="display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; border: 1px solid #D1FAE5; border-radius: 12px; background: #F0FDF4;">
+                            <i data-lucide="book-open" style="width: 20px; height: 20px; color: #2DB400; flex-shrink: 0; margin-top: 2px;"></i>
+                            <div>
+                                <div style="font-weight: 600; margin-bottom: 4px;">네이버 블로그</div>
+                                <div style="font-size: 0.8125rem; color: var(--text-muted);">마크다운 → 스마트에디터 HTML 변환. 복사 후 스마트에디터 「HTML 모드」에 붙여넣기 하세요.</div>
                             </div>
-                            <div style="width: 44px; height: 24px; background: #E5E7EB; border-radius: 999px;"></div>
-                        </label>
-                        <label style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; background: #FDFDFD;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <i data-lucide="twitter" style="width: 18px; height: 18px; color: #1D9BF0;"></i>
-                                <span style="font-weight: 500;">X (Twitter)</span>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; border: 1px solid #E5E7EB; border-radius: 12px; background: #F9FAFB;">
+                            <i data-lucide="at-sign" style="width: 20px; height: 20px; color: #111827; flex-shrink: 0; margin-top: 2px;"></i>
+                            <div>
+                                <div style="font-weight: 600; margin-bottom: 4px;">스레드 (Threads)</div>
+                                <div style="font-size: 0.8125rem; color: var(--text-muted);">긴 글 → 500자 이내 시리즈 포스트로 자동 분할. 각 포스트를 순서대로 스레드에 올리세요.</div>
                             </div>
-                            <div style="width: 44px; height: 24px; background: #E5E7EB; border-radius: 999px;"></div>
-                        </label>
-                        <label style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; background: #FDFDFD;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <i data-lucide="instagram" style="width: 18px; height: 18px; color: #EC4899;"></i>
-                                <span style="font-weight: 500;">Instagram</span>
-                            </div>
-                            <div style="width: 44px; height: 24px; background: #E5E7EB; border-radius: 999px;"></div>
-                        </label>
+                        </div>
                     </div>
                 </div>
 
@@ -1180,6 +1388,134 @@
         </section>
     </main>
 
+    <!-- ── SNS 변환 모달 ── -->
+    <div id="sns-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; padding:16px;">
+        <div style="background:white; border-radius:20px; width:min(760px, 100%); max-height:88vh; overflow-y:auto; padding:32px; position:relative; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <!-- 닫기 -->
+            <button id="sns-modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; color:var(--text-muted); padding:4px;">
+                <i data-lucide="x" style="width:20px; height:20px;"></i>
+            </button>
+
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+                <div class="stat-icon" style="margin-bottom:0; width:36px; height:36px;"><i data-lucide="share-2"></i></div>
+                <h3 style="margin:0; font-size:1.25rem;">SNS 변환</h3>
+            </div>
+
+            <!-- 탭 -->
+            <div style="display:flex; gap:4px; background:#F3F4F6; border-radius:12px; padding:4px; width:fit-content; margin-bottom:24px;">
+                <button id="sns-tab-naver" onclick="switchSnsTab('naver')"
+                    style="padding:8px 20px; border-radius:9px; border:none; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all 0.2s; background:white; color:var(--text-main); box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+                    네이버 블로그
+                </button>
+                <button id="sns-tab-threads" onclick="switchSnsTab('threads')"
+                    style="padding:8px 20px; border-radius:9px; border:none; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all 0.2s; background:transparent; color:var(--text-muted); box-shadow:none;">
+                    스레드
+                </button>
+            </div>
+
+            <!-- 네이버 블로그 패널 -->
+            <div id="sns-panel-naver">
+                <div class="input-group" style="margin-bottom:16px;">
+                    <label>제목</label>
+                    <input type="text" id="sns-naver-title" style="width:100%;">
+                </div>
+                <div class="input-group" style="margin-bottom:16px;">
+                    <label style="display:flex; align-items:center; justify-content:space-between;">
+                        <span>변환된 내용 (편집 후 복사해서 네이버 블로그에 붙여넣기)</span>
+                        <span id="sns-naver-charcount" style="font-size:0.75rem; color:var(--text-muted); font-weight:400;"></span>
+                    </label>
+                    <textarea id="sns-naver-content" style="height:300px; font-family:monospace; font-size:0.8125rem;" oninput="document.getElementById('sns-naver-charcount').textContent=this.value.length+'자'"></textarea>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button onclick="copyNaverText()" class="btn">
+                        <i data-lucide="clipboard-copy"></i> 텍스트 복사
+                    </button>
+                    <button onclick="copyNaverTitle()" class="btn" style="background:white; color:var(--text-main); border:1px solid var(--border);">
+                        <i data-lucide="type"></i> 제목만 복사
+                    </button>
+                </div>
+                <!-- 네이버 자동 업로드 -->
+                <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <select id="sns-naver-mode" style="padding:8px 14px; border:1px solid var(--border); border-radius:9px; font-size:0.875rem; background:white; cursor:pointer;">
+                            <option value="draft">임시저장</option>
+                            <option value="publish">발행</option>
+                        </select>
+                        <button onclick="publishToNaver()" id="sns-naver-upload-btn" class="btn" style="background:#03C75A; gap:6px;">
+                            <i data-lucide="upload"></i> 네이버에 업로드
+                        </button>
+                        <span id="sns-naver-upload-status" style="font-size:0.8125rem; color:var(--text-muted);"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 스레드 패널 -->
+            <div id="sns-panel-threads" style="display:none;">
+                <div class="input-group" style="margin-bottom:20px;">
+                    <label>블로그 원문 URL (선택 — 마지막 포스트에 첨부됩니다)</label>
+                    <input type="text" id="sns-blog-url" placeholder="예: https://doctornomad.org/posts/...">
+                </div>
+                <div id="sns-threads-loading" style="display:none; text-align:center; padding:24px; color:var(--text-muted);">
+                    <span class="loader" style="display:inline-block;"></span> 변환 중...
+                </div>
+                <div id="sns-threads-posts" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
+                    <button onclick="copyAllThreadsPosts()" class="btn" style="background:#111827;">
+                        <i data-lucide="clipboard-copy"></i> 전체 포스트 복사
+                    </button>
+                    <button onclick="regenerateThreads()" class="btn" style="background:white; color:var(--text-main); border:1px solid var(--border);">
+                        <i data-lucide="refresh-cw"></i> URL 반영해서 재변환
+                    </button>
+                </div>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-top:12px; line-height:1.6;">
+                    📌 각 포스트를 순서대로 스레드 앱에 올리세요. 카드 내용은 직접 편집할 수 있습니다.
+                </p>
+                <!-- 스레드 자동 업로드 -->
+                <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
+                    <div id="sns-threads-no-server" style="display:none; font-size:0.8125rem; color:#EF4444; margin-bottom:12px; padding:10px 14px; background:#FEF2F2; border-radius:9px;">
+                        ⚠️ 스레드 서버(thread auto)가 실행 중이지 않습니다.
+                    </div>
+                    <div id="sns-threads-upload-area">
+                        <div class="input-group" style="margin-bottom:12px;">
+                            <label>계정</label>
+                            <select id="sns-threads-account" style="width:100%; padding:8px 14px; border:1px solid var(--border); border-radius:9px; font-size:0.875rem; background:white; cursor:pointer;">
+                                <option value="">계정 불러오는 중...</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="margin-bottom:12px;">
+                            <label>발행 방식</label>
+                            <select id="sns-threads-schedule-type" onchange="updateThreadsScheduleUI()" style="width:100%; padding:8px 14px; border:1px solid var(--border); border-radius:9px; font-size:0.875rem; background:white; cursor:pointer;">
+                                <option value="now">즉시 발행</option>
+                                <option value="once">예약 발행 (1회)</option>
+                                <option value="repeat">반복 발행</option>
+                            </select>
+                        </div>
+                        <div id="sns-threads-datetime-row" style="display:none;" class="input-group" style="margin-bottom:12px;">
+                            <label>예약 날짜/시간</label>
+                            <input type="datetime-local" id="sns-threads-datetime" style="width:100%; padding:8px 14px; border:1px solid var(--border); border-radius:9px; font-size:0.875rem;">
+                        </div>
+                        <div id="sns-threads-cron-row" style="display:none; margin-bottom:12px;">
+                            <div class="input-group" style="margin-bottom:8px;">
+                                <label>Cron 표현식</label>
+                                <input type="text" id="sns-threads-cron" placeholder="예: 0 9 * * * (매일 오전 9시)" style="width:100%; padding:8px 14px; border:1px solid var(--border); border-radius:9px; font-size:0.875rem;">
+                            </div>
+                            <div class="input-group">
+                                <label>반복 주기 설명 (선택)</label>
+                                <input type="text" id="sns-threads-cron-label" placeholder="예: 매일 오전 9시" style="width:100%; padding:8px 14px; border:1px solid var(--border); border-radius:9px; font-size:0.875rem;">
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <button onclick="publishToThreads()" id="sns-threads-upload-btn" class="btn" style="background:#111827; gap:6px;">
+                                <i data-lucide="send"></i> 스레드에 업로드
+                            </button>
+                            <span id="sns-threads-upload-status" style="font-size:0.8125rem; color:var(--text-muted);"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="status-bar"></div>
 
     <script>
@@ -1281,6 +1617,24 @@
             notify(`"${name}" 블로그가 추가되었습니다.`, 'success');
         });
 
+        // ── 멀티 블로그: 현재 선택된 블로그 키 ──
+        const BLOG_PORTS = { weblog: 4321, blog2: 4322, blog3: 4323 };
+        let currentBlog = 'weblog';
+        const blogSelector = document.getElementById('blog-selector');
+        const localBlogLink = document.getElementById('local-blog-link');
+
+        function updateLocalBlogLink() {
+            const port = BLOG_PORTS[currentBlog] || 4321;
+            localBlogLink.href = `http://localhost:${port}`;
+        }
+
+        blogSelector.addEventListener('change', () => {
+            currentBlog = blogSelector.value;
+            updateLocalBlogLink();
+            loadData();
+            loadCategories();
+        });
+
         // Router / View Switcher
         const menuItems = document.querySelectorAll('.menu-item');
         const views = document.querySelectorAll('.view-content');
@@ -1290,6 +1644,7 @@
             'dashboard': '대시보드 요약',
             'blogs': '블로그 관리',
             'writer': 'AI 글쓰기 도구',
+            'bulk-writer': 'AI 대량 글쓰기',
             'posts': '게시물 관리',
             'categories': '카테고리 관리',
             'marketing': '마케팅',
@@ -1319,6 +1674,9 @@
                 }
                 if (targetView === 'categories') {
                     loadCategoryManagement();
+                }
+                if (targetView === 'bulk-writer') {
+                    loadCategories();
                 }
             });
         });
@@ -1386,14 +1744,14 @@
         async function loadData() {
             try {
                 // Load Stats
-                const statsRes = await fetch('/api/stats');
+                const statsRes = await fetch(`/api/stats?blog=${currentBlog}`);
                 const stats = await statsRes.json();
                 document.getElementById('stat-total').innerText = stats.total || 0;
                 document.getElementById('stat-drafts').innerText = stats.drafts || 0;
                 document.getElementById('stat-scheduled').innerText = stats.scheduled || 0;
 
                 // Load Posts
-                const postsRes = await fetch('/api/posts');
+                const postsRes = await fetch(`/api/posts?blog=${currentBlog}`);
                 const { posts } = await postsRes.json();
 
                 const renderPosts = (containerId) => {
@@ -1459,13 +1817,19 @@
 
             try {
                 const category = document.getElementById('category').value.trim() || "General";
-                const pubDateInput = document.getElementById('pub-date').value;
+                const singleMode = document.querySelector('input[name="single-publish-mode"]:checked').value;
+                const pubDateInput = singleMode === 'schedule' ? document.getElementById('pub-date').value : '';
                 const pubDate = pubDateInput ? new Date(pubDateInput).toISOString() : new Date().toISOString();
+                const model = document.getElementById('ai-model').value;
+                const writingStyle = document.getElementById('writing-style').value;
+
+                // 제휴링크 수집
+                const affiliateLinks = getAffiliateLinks();
 
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic, category, pubDate })
+                    body: JSON.stringify({ topic, category, pubDate, model, writingStyle, affiliateLinks })
                 });
 
                 const data = await response.json();
@@ -1484,43 +1848,49 @@
                 // Remove any thumbnail images AI might have added
                 content = content.replace(/!\[Thumbnail\]\(.*?\)\n\n/, '');
 
-                // Unsplash Image Replacement Logic
-                let unsplashMatches = content.match(/\[UNSPLASH:\s*(.*?)\]/g) || [];
+                // 쿠팡 링크가 있으면 Unsplash 이미지 사용 안 함
+                const hasCoupangLink = affiliateLinks.some(l => l.url && l.url.includes('coupang.com'));
 
-                // Fallback: If AI didn't provide enough tags, find H2 tags and add them
-                if (unsplashMatches.length < 3) {
-                    const h2Regex = /^##\s+(.*)$/gm;
-                    let match;
-                    let count = unsplashMatches.length;
-                    while ((match = h2Regex.exec(content)) !== null && count < 3) {
-                        const h2Text = match[1];
-                        const newTag = `\n[UNSPLASH: ${h2Text}]\n`;
-                        // Insert after the H2 line
-                        const insertPos = match.index + match[0].length;
-                        content = content.slice(0, insertPos) + newTag + content.slice(insertPos);
-                        count++;
+                // 혹시 AI가 UNSPLASH 태그를 넣었으면 제거
+                if (hasCoupangLink) {
+                    content = content.replace(/\[UNSPLASH:\s*.*?\]/g, '');
+                } else {
+                    // Unsplash Image Replacement Logic
+                    let unsplashMatches = content.match(/\[UNSPLASH:\s*(.*?)\]/g) || [];
+
+                    // Fallback: If AI didn't provide enough tags, find H2 tags and add them
+                    if (unsplashMatches.length < 3) {
+                        const h2Regex = /^##\s+(.*)$/gm;
+                        let match;
+                        let count = unsplashMatches.length;
+                        while ((match = h2Regex.exec(content)) !== null && count < 3) {
+                            const h2Text = match[1];
+                            const newTag = `\n[UNSPLASH: ${h2Text}]\n`;
+                            const insertPos = match.index + match[0].length;
+                            content = content.slice(0, insertPos) + newTag + content.slice(insertPos);
+                            count++;
+                        }
+                        unsplashMatches = content.match(/\[UNSPLASH:\s*(.*?)\]/g) || [];
                     }
-                    // Refresh matches
-                    unsplashMatches = content.match(/\[UNSPLASH:\s*(.*?)\]/g) || [];
-                }
 
-                if (unsplashMatches.length > 0) {
-                    notify(`${unsplashMatches.length}개의 본문 이미지를 가져오는 중...`, 'info');
-                    for (const match of unsplashMatches) {
-                        const keywordMatch = match.match(/\[UNSPLASH:\s*(.*?)\]/);
-                        if (!keywordMatch) continue;
-                        const keyword = keywordMatch[1];
-                        try {
-                            const res = await fetch(`/api/unsplash-search?query=${encodeURIComponent(keyword)}`);
-                            const imgData = await res.json();
-                            if (imgData.url) {
-                                content = content.replace(match, `\n\n![${keyword}](${imgData.url})\n\n`);
-                            } else {
-                                content = content.replace(match, ""); // Remove failed tags
+                    if (unsplashMatches.length > 0) {
+                        notify(`${unsplashMatches.length}개의 본문 이미지를 가져오는 중...`, 'info');
+                        for (const match of unsplashMatches) {
+                            const keywordMatch = match.match(/\[UNSPLASH:\s*(.*?)\]/);
+                            if (!keywordMatch) continue;
+                            const keyword = keywordMatch[1];
+                            try {
+                                const res = await fetch(`/api/unsplash-search?query=${encodeURIComponent(keyword)}&blog=${currentBlog}`);
+                                const imgData = await res.json();
+                                if (imgData.url) {
+                                    content = content.replace(match, `\n\n![${keyword}](${imgData.url})\n\n`);
+                                } else {
+                                    content = content.replace(match, '');
+                                }
+                            } catch (err) {
+                                console.error('Unsplash fetch error:', err);
+                                content = content.replace(match, '');
                             }
-                        } catch (err) {
-                            console.error('Unsplash fetch error:', err);
-                            content = content.replace(match, ""); // Remove failed tags
                         }
                     }
                 }
@@ -1653,7 +2023,7 @@
                 const res = await fetch('/api/publish', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fileName })
+                    body: JSON.stringify({ fileName, blog: currentBlog })
                 });
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
@@ -1668,7 +2038,7 @@
         // Load Categories
         async function loadCategories() {
             try {
-                const res = await fetch('/api/categories');
+                const res = await fetch(`/api/categories?blog=${currentBlog}`);
                 const { categories = [] } = await res.json();
                 const container = document.getElementById('existing-categories');
                 if (!container) return;
@@ -1678,6 +2048,16 @@
                         ${cat}
                     </span>
                 `).join('');
+
+                // Also populate bulk writer categories
+                const bulkContainer = document.getElementById('bulk-existing-categories');
+                if (bulkContainer) {
+                    bulkContainer.innerHTML = categories.map(cat => `
+                        <span class="cat-pill" style="font-size: 0.75rem; background: #E5E7EB; padding: 4px 8px; border-radius: 999px; cursor: pointer; transition: all 0.2s;" onclick="setBulkCategory('${cat.replace(/'/g, "\\'")}')">
+                            ${cat}
+                        </span>
+                    `).join('');
+                }
             } catch (err) {
                 console.error('Failed to load categories:', err);
             }
@@ -1685,6 +2065,10 @@
 
         function setCategory(cat) {
             document.getElementById('category').value = cat;
+        }
+
+        function setBulkCategory(cat) {
+            document.getElementById('bulk-category').value = cat;
         }
 
         // Category Management
@@ -1695,7 +2079,7 @@
         async function loadCategoryManagement() {
             categoriesList.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1;">데이터를 불러오는 중...</p>';
             try {
-                const res = await fetch('/api/categories');
+                const res = await fetch(`/api/categories?blog=${currentBlog}`);
                 const data = await res.json();
                 const categories = data.categories || [];
                 const categoryCounts = data.categoryCounts || {};
@@ -1744,7 +2128,7 @@
                 const response = await fetch('/api/categories', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ category: categoryName })
+                    body: JSON.stringify({ category: categoryName, blog: currentBlog })
                 });
 
                 const data = await response.json();
@@ -1776,7 +2160,7 @@
                 const response = await fetch('/api/categories', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ category: categoryName })
+                    body: JSON.stringify({ category: categoryName, blog: currentBlog })
                 });
 
                 const data = await response.json();
@@ -1800,7 +2184,7 @@
                 const response = await fetch('/api/categories', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ oldName, newName: newName.trim() })
+                    body: JSON.stringify({ oldName, newName: newName.trim(), blog: currentBlog })
                 });
 
                 const data = await response.json();
@@ -1822,8 +2206,10 @@
             let content = contentArea.value.trim();
             if (!content) return;
 
-            // Sync reservation date first
-            const pubDateInput = document.getElementById('pub-date').value;
+            const singleMode = document.querySelector('input[name="single-publish-mode"]:checked').value;
+            const pubDateInput = singleMode === 'schedule' ? document.getElementById('pub-date').value : '';
+
+            // Sync reservation date
             if (pubDateInput) {
                 const pubDate = new Date(pubDateInput).toISOString();
                 if (content.includes('pubDatetime:')) {
@@ -1831,23 +2217,19 @@
                 }
             }
 
-            // Change draft status
-            // 예약 발행: 미래 날짜가 설정돼 있더라도 draft: false여야 
-            // Astro 빌드 시점에 pubDatetime 기반으로 노출 여부가 결정됩니다.
+            // Change draft status based on mode
             if (isPublish) {
-                const isScheduled = pubDateInput && new Date(pubDateInput) > new Date();
-                if (isScheduled) {
-                    // draft: false — Astro 빌드 시점에 날짜를 체크하여 자동 노출
-                    if (!content.includes('draft:')) {
-                        content = content.replace(/^---\n/, '---\ndraft: false\n');
-                    } else {
-                        content = content.replace(/draft:\s*true/, 'draft: false');
-                    }
+                if (!content.includes('draft:')) {
+                    content = content.replace(/^---\n/, '---\ndraft: false\n');
                 } else {
                     content = content.replace(/draft:\s*true/, 'draft: false');
                 }
-            } else if (!content.includes('draft: true')) {
-                content = content.replace(/draft:\s*false/, 'draft: true');
+            } else {
+                if (!content.includes('draft:')) {
+                    content = content.replace(/^---\n/, '---\ndraft: true\n');
+                } else {
+                    content = content.replace(/draft:\s*false/, 'draft: true');
+                }
             }
 
             // Pass thumbnail image to server for processing
@@ -1862,15 +2244,14 @@
                 const response = await fetch('/api/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content, thumbnailImage })
+                    body: JSON.stringify({ content, thumbnailImage, blog: currentBlog })
                 });
 
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
-                const isScheduled = pubDateInput && new Date(pubDateInput) > new Date();
                 const statusText = isPublish
-                    ? (isScheduled ? `예약 등록 (${new Date(pubDateInput).toLocaleString('ko-KR')})` : '성공적으로 발행')
+                    ? (singleMode === 'schedule' && pubDateInput ? `예약 등록 (${new Date(pubDateInput).toLocaleString('ko-KR')})` : '성공적으로 발행')
                     : '임시 저장';
                 notify(`게시물이 ${statusText}되었습니다: ${data.fileName}`, 'success');
 
@@ -1893,7 +2274,10 @@
         }
 
         saveBtn.addEventListener('click', () => savePost(false));
-        publishBtn.addEventListener('click', () => savePost(true));
+        publishBtn.addEventListener('click', () => {
+            const mode = document.querySelector('input[name="single-publish-mode"]:checked')?.value || 'draft';
+            savePost(mode !== 'draft');
+        });
 
         function resetForm() {
             topicInput.value = '';
@@ -1909,6 +2293,11 @@
             if (thumbnailPreviewContainer) thumbnailPreviewContainer.style.display = 'none';
             if (thumbnailFileInput) thumbnailFileInput.value = '';
 
+            // Reset publish mode & affiliate
+            const draftRadio = document.querySelector('input[name="single-publish-mode"][value="draft"]');
+            if (draftRadio) draftRadio.checked = true;
+            if (affiliateRows) affiliateRows.innerHTML = '';
+
             if (typeof updatePublishButtonUI === 'function') {
                 updatePublishButtonUI();
             }
@@ -1919,36 +2308,173 @@
 
 
 
-        // Reservation UI Logic
-        const pubDateInputEl = document.getElementById('pub-date');
+        // Publish mode UI Logic
         const publishBtnText = document.getElementById('publish-btn-text');
         const publishIcon = document.getElementById('publish-icon');
+        const singleScheduleOptions = document.getElementById('single-schedule-options');
 
         function updatePublishButtonUI() {
-            const dateVal = pubDateInputEl.value;
-            if (dateVal) {
-                const selectedDate = new Date(dateVal);
-                const now = new Date();
-
-                if (selectedDate > now) {
-                    publishBtnText.innerText = '예약 발행';
-                    publishIcon.setAttribute('data-lucide', 'clock');
-                    publishBtn.style.backgroundColor = '#3B82F6'; // Blue for reservation
-                } else {
-                    publishBtnText.innerText = '즉시 발행';
-                    publishIcon.setAttribute('data-lucide', 'send');
-                    publishBtn.style.backgroundColor = 'var(--primary)';
-                }
-            } else {
+            const mode = document.querySelector('input[name="single-publish-mode"]:checked')?.value || 'draft';
+            singleScheduleOptions.style.display = mode === 'schedule' ? 'block' : 'none';
+            if (mode === 'schedule') {
+                publishBtnText.innerText = '예약 발행';
+                publishIcon.setAttribute('data-lucide', 'clock');
+                publishBtn.style.backgroundColor = '#3B82F6';
+                saveBtn.style.display = 'none';
+                publishBtn.style.display = '';
+            } else if (mode === 'now') {
                 publishBtnText.innerText = '즉시 발행';
                 publishIcon.setAttribute('data-lucide', 'send');
                 publishBtn.style.backgroundColor = 'var(--primary)';
+                saveBtn.style.display = 'none';
+                publishBtn.style.display = '';
+            } else {
+                publishBtnText.innerText = '임시 저장';
+                publishIcon.setAttribute('data-lucide', 'save');
+                publishBtn.style.backgroundColor = '#6B7280';
+                saveBtn.style.display = 'none';
+                publishBtn.style.display = '';
             }
             lucide.createIcons();
         }
 
-        pubDateInputEl.addEventListener('change', updatePublishButtonUI);
-        pubDateInputEl.addEventListener('input', updatePublishButtonUI);
+        document.querySelectorAll('input[name="single-publish-mode"]').forEach(r => {
+            r.addEventListener('change', updatePublishButtonUI);
+        });
+        updatePublishButtonUI();
+
+        // ── 제휴링크 행 추가/삭제 UI ──
+        const affiliateRows = document.getElementById('single-affiliate-rows');
+        const affiliateAddBtn = document.getElementById('single-affiliate-add-btn');
+
+        // 이미지 선택 모달
+        const imgModal = document.createElement('div');
+        imgModal.id = 'aff-img-modal';
+        imgModal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;';
+        imgModal.innerHTML = `
+            <div style="background:#fff; border-radius:20px; padding:24px; width:90%; max-width:600px; max-height:80vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 id="aff-img-modal-title" style="margin:0; font-size:1rem;">상품 이미지 검색</h3>
+                    <button id="aff-img-modal-close" style="border:none; background:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted);">✕</button>
+                </div>
+                <div id="aff-img-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+                    <div style="grid-column:1/-1; text-align:center; padding:24px; color:var(--text-muted);">검색 중...</div>
+                </div>
+            </div>`;
+        document.body.appendChild(imgModal);
+        document.getElementById('aff-img-modal-close').addEventListener('click', () => { imgModal.style.display = 'none'; });
+        imgModal.addEventListener('click', e => { if (e.target === imgModal) imgModal.style.display = 'none'; });
+
+        let currentImgCallback = null;
+
+        async function openProductImageSearch(productName, onSelect) {
+            currentImgCallback = onSelect;
+            document.getElementById('aff-img-modal-title').textContent = `"${productName}" 이미지 검색`;
+            const grid = document.getElementById('aff-img-grid');
+            grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:24px; color:var(--text-muted);">검색 중...</div>';
+            imgModal.style.display = 'flex';
+
+            try {
+                const res = await fetch(`/api/product-image-search?query=${encodeURIComponent(productName)}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                if (!data.images || data.images.length === 0) {
+                    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:24px; color:var(--text-muted);">이미지를 찾을 수 없습니다.</div>';
+                    return;
+                }
+                grid.innerHTML = data.images.map((img, i) => `
+                    <div data-idx="${i}" style="cursor:pointer; border-radius:12px; overflow:hidden; border:2px solid transparent; transition:border-color 0.2s; aspect-ratio:1; background:#f3f4f6;">
+                        <img src="${img.thumbnail}" alt="${(img.title||'').replace(/"/g,'&quot;')}"
+                            style="width:100%; height:100%; object-fit:cover; display:block;"
+                            onerror="this.parentElement.style.display='none'">
+                    </div>`).join('');
+
+                grid.querySelectorAll('[data-idx]').forEach(el => {
+                    el.addEventListener('mouseenter', () => el.style.borderColor = 'var(--primary)');
+                    el.addEventListener('mouseleave', () => el.style.borderColor = 'transparent');
+                    el.addEventListener('click', () => {
+                        const idx = parseInt(el.dataset.idx);
+                        const img = data.images[idx];
+                        if (currentImgCallback) currentImgCallback(img.url, img.thumbnail);
+                        imgModal.style.display = 'none';
+                    });
+                });
+            } catch (err) {
+                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:24px; color:#EF4444;">오류: ${err.message}</div>`;
+            }
+        }
+
+        function createAffiliateRow(name = '', url = '', imgUrl = '') {
+            const row = document.createElement('div');
+            row.style.cssText = 'background: var(--bg); border-radius:12px; padding:12px 14px; border:1px solid var(--border);';
+            row.innerHTML = `
+                <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                    <input type="text" placeholder="제품명" value="${name.replace(/"/g, '&quot;')}"
+                        style="flex:0 0 160px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); font-size:0.875rem; font-family:inherit;"
+                        class="aff-name">
+                    <input type="url" placeholder="https://link.coupang.com/a/..." value="${url.replace(/"/g, '&quot;')}"
+                        style="flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--border); font-size:0.875rem; font-family:inherit;"
+                        class="aff-url">
+                    <button type="button" class="aff-img-btn" title="상품 이미지 검색"
+                        style="flex-shrink:0; padding:8px 10px; border-radius:8px; border:1px solid var(--primary); background:white; color:var(--primary); cursor:pointer; display:flex; align-items:center; gap:4px; font-size:0.78rem; white-space:nowrap;">
+                        <i data-lucide="image" style="width:14px; height:14px;"></i> 이미지
+                    </button>
+                    <button type="button" class="aff-del-btn" title="삭제"
+                        style="flex-shrink:0; padding:8px; border-radius:8px; border:none; background:#FEE2E2; color:#DC2626; cursor:pointer; display:flex; align-items:center;">
+                        <i data-lucide="trash-2" style="width:15px; height:15px;"></i>
+                    </button>
+                </div>
+                <div class="aff-img-preview" style="${imgUrl ? '' : 'display:none;'} display:flex; align-items:center; gap:10px; padding:8px 10px; background:#fff; border-radius:10px; border:1px solid var(--border);">
+                    <img class="aff-img-thumb" src="${imgUrl}" style="width:56px; height:56px; object-fit:cover; border-radius:8px; flex-shrink:0;">
+                    <span style="font-size:0.8rem; color:var(--text-muted); flex:1;">선택된 이미지 — 본문에 자동 삽입됩니다.</span>
+                    <button type="button" class="aff-img-remove" style="border:none; background:none; color:#DC2626; cursor:pointer; font-size:0.8rem;">제거</button>
+                </div>
+                <input type="hidden" class="aff-img-url" value="${imgUrl.replace(/"/g, '&quot;')}">`;
+
+            const nameInput = row.querySelector('.aff-name');
+            const imgBtn = row.querySelector('.aff-img-btn');
+            const preview = row.querySelector('.aff-img-preview');
+            const thumb = row.querySelector('.aff-img-thumb');
+            const imgUrlInput = row.querySelector('.aff-img-url');
+            const imgRemove = row.querySelector('.aff-img-remove');
+
+            imgBtn.addEventListener('click', () => {
+                const productName = nameInput.value.trim();
+                if (!productName) { notify('제품명을 먼저 입력해주세요.', 'error'); return; }
+                openProductImageSearch(productName, (fullUrl, thumbnailUrl) => {
+                    imgUrlInput.value = fullUrl;
+                    thumb.src = thumbnailUrl;
+                    preview.style.display = 'flex';
+                });
+            });
+
+            imgRemove.addEventListener('click', () => {
+                imgUrlInput.value = '';
+                thumb.src = '';
+                preview.style.display = 'none';
+            });
+
+            row.querySelector('.aff-del-btn').addEventListener('click', () => {
+                row.remove();
+            });
+
+            affiliateRows.appendChild(row);
+            lucide.createIcons();
+            return row;
+        }
+
+        affiliateAddBtn.addEventListener('click', () => {
+            createAffiliateRow();
+            affiliateRows.querySelector('.aff-name')?.focus();
+        });
+
+        function getAffiliateLinks() {
+            return Array.from(affiliateRows.querySelectorAll(':scope > div')).map(row => ({
+                name:   row.querySelector('.aff-name')?.value.trim() || '',
+                url:    row.querySelector('.aff-url')?.value.trim() || '',
+                imgUrl: row.querySelector('.aff-img-url')?.value.trim() || '',
+            })).filter(l => l.name && l.url);
+        }
 
 
 
@@ -1956,7 +2482,7 @@
             if (!confirm(`'${fileName}'을(를) 정말 삭제하시겠습니까?`)) return;
 
             try {
-                const response = await fetch(`/api/posts/${fileName}`, { method: 'DELETE' });
+                const response = await fetch(`/api/posts/${fileName}?blog=${currentBlog}`, { method: 'DELETE' });
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
 
@@ -2162,7 +2688,7 @@
             btn.innerHTML = '<span class="loader" style="display:inline-block;"></span> 트리거 중...';
             result.style.display = 'none';
             try {
-                const res = await fetch('/api/check-schedule', { method: 'POST' });
+                const res = await fetch('/api/check-schedule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ blog: currentBlog }) });
                 const data = await res.json();
                 result.style.display = 'block';
                 if (data.triggered) {
@@ -2383,6 +2909,523 @@
 
         // 초기 상태
         setJisikInOffline();
+
+        // ── SNS 변환 기능 ──
+        let snsConvertedData = null;
+
+        function switchSnsTab(platform) {
+            const isNaver = platform === 'naver';
+            document.getElementById('sns-panel-naver').style.display = isNaver ? '' : 'none';
+            document.getElementById('sns-panel-threads').style.display = isNaver ? 'none' : '';
+            const naverTab = document.getElementById('sns-tab-naver');
+            const threadsTab = document.getElementById('sns-tab-threads');
+            naverTab.style.background = isNaver ? 'white' : 'transparent';
+            naverTab.style.color = isNaver ? 'var(--text-main)' : 'var(--text-muted)';
+            naverTab.style.boxShadow = isNaver ? '0 1px 4px rgba(0,0,0,0.08)' : 'none';
+            threadsTab.style.background = isNaver ? 'transparent' : 'white';
+            threadsTab.style.color = isNaver ? 'var(--text-muted)' : 'var(--text-main)';
+            threadsTab.style.boxShadow = isNaver ? 'none' : '0 1px 4px rgba(0,0,0,0.08)';
+        }
+
+        async function openSnsModal() {
+            const markdown = document.getElementById('content').value;
+            if (!markdown.trim()) { notify('먼저 글을 생성해 주세요.', 'error'); return; }
+
+            const modal = document.getElementById('sns-modal');
+            modal.style.display = 'flex';
+            document.getElementById('sns-naver-content').value = '변환 중...';
+            document.getElementById('sns-naver-upload-status').textContent = '';
+            document.getElementById('sns-threads-posts').innerHTML = '';
+            document.getElementById('sns-threads-upload-status').textContent = '';
+            document.getElementById('sns-threads-loading').style.display = 'block';
+            switchSnsTab('naver');
+            lucide.createIcons();
+            loadThreadsAccounts();
+
+            const blogUrl = document.getElementById('sns-blog-url') ? document.getElementById('sns-blog-url').value : '';
+
+            try {
+                const res = await fetch('/api/sns/convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ markdown, blogUrl })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                snsConvertedData = data;
+                renderSnsModal(data);
+            } catch (err) {
+                modal.style.display = 'none';
+                notify('변환 오류: ' + err.message, 'error');
+            }
+        }
+
+        function renderSnsModal(data) {
+            // 네이버
+            document.getElementById('sns-naver-title').value = data.naver.title;
+            const naverContent = document.getElementById('sns-naver-content');
+            naverContent.value = data.naver.htmlContent;
+            document.getElementById('sns-naver-charcount').textContent = naverContent.value.length + '자';
+
+            // 스레드
+            document.getElementById('sns-threads-loading').style.display = 'none';
+            const container = document.getElementById('sns-threads-posts');
+            container.innerHTML = data.threads.posts.map((text, i) => `
+                <div style="border:1px solid var(--border); border-radius:12px; padding:14px; background:#FDFDFD;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">포스트 ${i+1} / ${data.threads.posts.length}</span>
+                        <span class="thread-charcount" style="font-size:0.75rem; color:${text.length > 480 ? '#EF4444' : 'var(--text-muted)'};">${text.length}자</span>
+                    </div>
+                    <textarea class="sns-thread-post" style="width:100%; min-height:90px; resize:vertical; border:1px solid var(--border); border-radius:8px; padding:10px; font-size:0.875rem; line-height:1.6; background:white;" oninput="updateThreadCharcount(this)">${text}</textarea>
+                    <button onclick="copySingleThread(this)" style="margin-top:8px; border:none; background:none; color:var(--primary); font-size:0.8125rem; cursor:pointer; padding:0; display:flex; align-items:center; gap:4px;">
+                        <i data-lucide="clipboard-copy" style="width:14px; height:14px;"></i> 이 포스트 복사
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function updateThreadCharcount(textarea) {
+            const countEl = textarea.closest('div').querySelector('.thread-charcount');
+            const len = textarea.value.length;
+            countEl.textContent = len + '자';
+            countEl.style.color = len > 480 ? '#EF4444' : 'var(--text-muted)';
+        }
+
+        async function regenerateThreads() {
+            const markdown = document.getElementById('content').value;
+            if (!markdown.trim()) return;
+            const blogUrl = document.getElementById('sns-blog-url').value;
+            document.getElementById('sns-threads-loading').style.display = 'block';
+            document.getElementById('sns-threads-posts').innerHTML = '';
+            try {
+                const res = await fetch('/api/sns/convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ markdown, blogUrl })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                snsConvertedData = data;
+                document.getElementById('sns-threads-loading').style.display = 'none';
+                const container = document.getElementById('sns-threads-posts');
+                container.innerHTML = data.threads.posts.map((text, i) => `
+                    <div style="border:1px solid var(--border); border-radius:12px; padding:14px; background:#FDFDFD;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">포스트 ${i+1} / ${data.threads.posts.length}</span>
+                            <span class="thread-charcount" style="font-size:0.75rem; color:${text.length > 480 ? '#EF4444' : 'var(--text-muted)'};">${text.length}자</span>
+                        </div>
+                        <textarea class="sns-thread-post" style="width:100%; min-height:90px; resize:vertical; border:1px solid var(--border); border-radius:8px; padding:10px; font-size:0.875rem; line-height:1.6; background:white;" oninput="updateThreadCharcount(this)">${text}</textarea>
+                        <button onclick="copySingleThread(this)" style="margin-top:8px; border:none; background:none; color:var(--primary); font-size:0.8125rem; cursor:pointer; padding:0; display:flex; align-items:center; gap:4px;">
+                            <i data-lucide="clipboard-copy" style="width:14px; height:14px;"></i> 이 포스트 복사
+                        </button>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            } catch (err) {
+                notify('재변환 오류: ' + err.message, 'error');
+            }
+        }
+
+        function copyNaverContent() {
+            const html = document.getElementById('sns-naver-content').value;
+            navigator.clipboard.writeText(html).then(() => notify('HTML이 클립보드에 복사되었습니다.', 'success'));
+        }
+
+        function copyNaverText() {
+            const html = document.getElementById('sns-naver-content').value;
+            // HTML 태그 제거 후 순수 텍스트 추출
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const text = tmp.innerText || tmp.textContent;
+            navigator.clipboard.writeText(text.trim()).then(() => notify('텍스트가 클립보드에 복사되었습니다.', 'success'));
+        }
+
+        function copyNaverTitle() {
+            const title = document.getElementById('sns-naver-title').value;
+            navigator.clipboard.writeText(title).then(() => notify('제목이 클립보드에 복사되었습니다.', 'success'));
+        }
+
+        function copySingleThread(btn) {
+            const textarea = btn.closest('div').querySelector('textarea');
+            navigator.clipboard.writeText(textarea.value).then(() => notify('복사되었습니다.', 'success'));
+        }
+
+        function copyAllThreadsPosts() {
+            const posts = [...document.querySelectorAll('.sns-thread-post')].map(t => t.value).join('\n\n---\n\n');
+            navigator.clipboard.writeText(posts).then(() => notify('전체 포스트가 클립보드에 복사되었습니다.', 'success'));
+        }
+
+        // ── 스레드 예약 UI 토글 ──
+        function updateThreadsScheduleUI() {
+            const type = document.getElementById('sns-threads-schedule-type').value;
+            document.getElementById('sns-threads-datetime-row').style.display = type === 'once' ? '' : 'none';
+            document.getElementById('sns-threads-cron-row').style.display = type === 'repeat' ? '' : 'none';
+        }
+
+        // ── 스레드 계정 목록 로드 ──
+        async function loadThreadsAccounts() {
+            const select = document.getElementById('sns-threads-account');
+            const noServer = document.getElementById('sns-threads-no-server');
+            const uploadArea = document.getElementById('sns-threads-upload-area');
+            try {
+                const res = await fetch('/api/threads/accounts');
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message);
+                const accounts = data.accounts || [];
+                if (accounts.length === 0) {
+                    select.innerHTML = '<option value="">등록된 계정 없음</option>';
+                } else {
+                    select.innerHTML = accounts.map(a =>
+                        `<option value="${a.id}">${a.displayName || a.username} (@${a.username})</option>`
+                    ).join('');
+                }
+                noServer.style.display = 'none';
+                uploadArea.style.display = '';
+            } catch (err) {
+                noServer.style.display = '';
+                noServer.textContent = '⚠️ ' + (err.message || '스레드 서버가 실행 중이지 않습니다.');
+                uploadArea.style.display = 'none';
+            }
+        }
+
+        // ── 네이버 업로드 ──
+        async function publishToNaver() {
+            const title = document.getElementById('sns-naver-title').value.trim();
+            const content = document.getElementById('sns-naver-content').value.trim();
+            const mode = document.getElementById('sns-naver-mode').value;
+            const btn = document.getElementById('sns-naver-upload-btn');
+            const status = document.getElementById('sns-naver-upload-status');
+            if (!title || !content) { notify('제목과 내용을 먼저 변환해주세요.', 'error'); return; }
+            btn.disabled = true;
+            status.textContent = '업로드 중...';
+            try {
+                const res = await fetch('/api/publish-naver', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content, mode })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message);
+                status.style.color = '#22C55E';
+                status.textContent = '✓ 업로드 완료';
+                notify('네이버 블로그 업로드 완료!', 'success');
+            } catch (err) {
+                status.style.color = '#EF4444';
+                status.textContent = '✗ 실패: ' + err.message;
+                notify('네이버 업로드 오류: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ── 스레드 업로드 ──
+        async function publishToThreads() {
+            const accountId = document.getElementById('sns-threads-account').value;
+            const scheduleType = document.getElementById('sns-threads-schedule-type').value;
+            const btn = document.getElementById('sns-threads-upload-btn');
+            const status = document.getElementById('sns-threads-upload-status');
+            if (!accountId) { notify('계정을 선택해주세요.', 'error'); return; }
+            // 첫 번째 포스트 텍스트 사용
+            const firstPost = document.querySelector('.sns-thread-post');
+            if (!firstPost || !firstPost.value.trim()) { notify('업로드할 내용이 없습니다.', 'error'); return; }
+            const content = firstPost.value.trim();
+            const body = { accountId, content, scheduleType };
+            if (scheduleType === 'once') {
+                const dt = document.getElementById('sns-threads-datetime').value;
+                if (!dt) { notify('예약 날짜/시간을 입력해주세요.', 'error'); return; }
+                body.dateTime = dt;
+            } else if (scheduleType === 'repeat') {
+                const cron = document.getElementById('sns-threads-cron').value.trim();
+                if (!cron) { notify('Cron 표현식을 입력해주세요.', 'error'); return; }
+                body.cronExpression = cron;
+                body.repeatLabel = document.getElementById('sns-threads-cron-label').value.trim();
+            }
+            btn.disabled = true;
+            status.textContent = scheduleType === 'now' ? '업로드 중...' : '예약 등록 중...';
+            status.style.color = 'var(--text-muted)';
+            try {
+                const res = await fetch('/api/publish-threads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message);
+                status.style.color = '#22C55E';
+                status.textContent = scheduleType === 'now' ? '✓ 업로드 완료' : '✓ 예약 등록 완료';
+                notify(scheduleType === 'now' ? '스레드 업로드 완료!' : '스레드 예약 등록 완료!', 'success');
+            } catch (err) {
+                status.style.color = '#EF4444';
+                status.textContent = '✗ 실패: ' + err.message;
+                notify('스레드 오류: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // 버튼 이벤트
+        document.getElementById('sns-convert-btn').addEventListener('click', openSnsModal);
+        document.getElementById('sns-modal-close').addEventListener('click', () => {
+            document.getElementById('sns-modal').style.display = 'none';
+        });
+        document.getElementById('sns-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('sns-modal')) {
+                document.getElementById('sns-modal').style.display = 'none';
+            }
+        });
+        // ── 대량 글쓰기 (Bulk Writer) ──
+        (function initBulkWriter() {
+            const keywordsInput = document.getElementById('bulk-keywords');
+            const keywordCount = document.getElementById('bulk-keyword-count');
+            const keywordWarning = document.getElementById('bulk-keyword-warning');
+            const bulkGenBtn = document.getElementById('bulk-generate-btn');
+            const bulkGenLoader = document.getElementById('bulk-gen-loader');
+            const bulkGenText = document.getElementById('bulk-gen-btn-text');
+            const progressSection = document.getElementById('bulk-progress-section');
+            const progressBar = document.getElementById('bulk-progress-bar');
+            const progressCount = document.getElementById('bulk-progress-count');
+            const progressList = document.getElementById('bulk-progress-list');
+            const resultSection = document.getElementById('bulk-result-section');
+            const scheduleOptions = document.getElementById('bulk-schedule-options');
+            const schedulePreview = document.getElementById('bulk-schedule-preview');
+            const bulkThumbnailFile = document.getElementById('bulk-thumbnail-file');
+            const bulkThumbnailPreview = document.getElementById('bulk-thumbnail-preview');
+            const bulkThumbnailContainer = document.getElementById('bulk-thumbnail-preview-container');
+            const bulkRemoveThumbnail = document.getElementById('bulk-remove-thumbnail-btn');
+
+            let bulkThumbnailRawSrc = null;
+
+            // Image mode hint toggle
+            document.querySelectorAll('input[name="bulk-image-mode"]').forEach(r => {
+                r.addEventListener('change', () => {
+                    document.getElementById('bulk-image-mode-hint').style.display =
+                        r.value === 'serp' && r.checked ? 'block' : 'none';
+                });
+            });
+
+            // Keyword count + affiliate rows
+            keywordsInput.addEventListener('input', () => {
+                const lines = keywordsInput.value.split('\n').filter(l => l.trim());
+                const count = lines.length;
+                keywordCount.textContent = `(${count}/10)`;
+                keywordCount.style.color = count > 10 ? '#EF4444' : 'var(--primary)';
+                keywordWarning.style.display = count > 10 ? 'block' : 'none';
+                updateSchedulePreview();
+                renderAffiliateRows(lines.slice(0, 10));
+            });
+
+            function renderAffiliateRows(keywords) {
+                const list = document.getElementById('bulk-affiliate-keyword-list');
+                const placeholder = document.getElementById('bulk-affiliate-placeholder');
+                if (keywords.length === 0) {
+                    list.innerHTML = '<p id="bulk-affiliate-placeholder" style="font-size: 0.85rem; color: var(--text-muted); padding: 12px; background: var(--bg); border-radius: 10px; text-align: center;">위에서 키워드를 입력하면 여기에 키워드별 링크 입력칸이 생성됩니다.</p>';
+                    return;
+                }
+                if (placeholder) placeholder.remove();
+                section.style.display = 'block';
+
+                // 기존 행의 입력값 보존
+                const existing = {};
+                list.querySelectorAll('[data-kw]').forEach(el => {
+                    existing[el.dataset.kw] = el.value;
+                });
+
+                list.innerHTML = keywords.map(kw => `
+                    <div style="background: var(--bg); border-radius: 12px; padding: 12px 14px; border: 1px solid var(--border);">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 8px;">📌 ${kw}</div>
+                        <textarea data-kw="${kw.replace(/"/g, '&quot;')}" rows="2"
+                            placeholder="제품명 | https://link.coupang.com/a/xxx&#10;제품명2 | https://link.coupang.com/a/yyy"
+                            style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.82rem; font-family: monospace; resize: vertical; line-height: 1.5;"
+                        >${existing[kw] || ''}</textarea>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            }
+
+            // Publish mode toggle
+            document.querySelectorAll('input[name="bulk-publish-mode"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    scheduleOptions.style.display = radio.value === 'schedule' && radio.checked ? 'block' : 'none';
+                    if (radio.value === 'schedule' && radio.checked) {
+                        const now = new Date();
+                        now.setMinutes(now.getMinutes() + 30);
+                        const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                        document.getElementById('bulk-schedule-start').value = local;
+                        updateSchedulePreview();
+                    }
+                });
+            });
+
+            document.getElementById('bulk-schedule-start').addEventListener('change', updateSchedulePreview);
+            document.getElementById('bulk-schedule-interval').addEventListener('input', updateSchedulePreview);
+
+            function updateSchedulePreview() {
+                const mode = document.querySelector('input[name="bulk-publish-mode"]:checked').value;
+                if (mode !== 'schedule') return;
+                const startVal = document.getElementById('bulk-schedule-start').value;
+                const interval = parseInt(document.getElementById('bulk-schedule-interval').value) || 30;
+                const count = keywordsInput.value.split('\n').filter(l => l.trim()).length;
+                if (!startVal || count === 0) { schedulePreview.textContent = ''; return; }
+                const start = new Date(startVal);
+                const end = new Date(start.getTime() + (count - 1) * interval * 60000);
+                schedulePreview.textContent = `${count}개 글이 ${start.toLocaleString('ko-KR')} ~ ${end.toLocaleString('ko-KR')} 사이에 발행됩니다. (간격: ${interval}분)`;
+            }
+
+            // Thumbnail
+            bulkThumbnailFile.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    bulkThumbnailRawSrc = ev.target.result;
+                    bulkThumbnailPreview.src = bulkThumbnailRawSrc;
+                    bulkThumbnailContainer.style.display = 'block';
+                    lucide.createIcons();
+                };
+                reader.readAsDataURL(file);
+            });
+
+            bulkRemoveThumbnail.addEventListener('click', () => {
+                bulkThumbnailRawSrc = null;
+                bulkThumbnailPreview.src = '';
+                bulkThumbnailContainer.style.display = 'none';
+                bulkThumbnailFile.value = '';
+            });
+
+            // Status item HTML
+            function statusItem(keyword, status, icon, color) {
+                return `<div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: white; border-radius: 10px; border: 1px solid var(--border);">
+                    <span style="color: ${color}; font-size: 1.1rem;">${icon}</span>
+                    <span style="flex: 1; font-size: 0.9rem;">${keyword}</span>
+                    <span style="font-size: 0.8rem; color: ${color};">${status}</span>
+                </div>`;
+            }
+
+            // Status label map
+            const statusLabels = {
+                pending: ['대기중', '○', '#9CA3AF'],
+                generating: ['글 생성중...', '⟳', '#3B82F6'],
+                images: ['이미지 처리중...', '⟳', '#8B5CF6'],
+                saving: ['저장중...', '⟳', '#F59E0B'],
+                publishing: ['발행중...', '⟳', '#F59E0B'],
+                done: ['완료 ✓', '●', '#059669'],
+                failed: ['실패', '✗', '#DC2626'],
+            };
+
+            let pollTimer = null;
+
+            function renderProgress(job) {
+                progressBar.style.width = `${(job.completed / job.total) * 100}%`;
+                progressCount.textContent = `${job.completed}/${job.total}`;
+
+                progressList.innerHTML = job.items.map(item => {
+                    const [label, icon, color] = statusLabels[item.status] || statusLabels.pending;
+                    const msg = item.status === 'failed' ? `실패: ${item.message}` : label;
+                    return statusItem(item.keyword, msg, icon, color);
+                }).join('');
+
+                if (job.done) {
+                    resultSection.style.display = 'block';
+                    document.getElementById('bulk-success-count').textContent = job.successes;
+                    document.getElementById('bulk-fail-count').textContent = job.failures;
+
+                    bulkGenBtn.disabled = false;
+                    bulkGenLoader.style.display = 'none';
+                    bulkGenText.textContent = '대량 생성 시작';
+
+                    notify(`대량 생성 완료: 성공 ${job.successes}개, 실패 ${job.failures}개`, job.successes > 0 ? 'success' : 'error');
+                    loadData();
+
+                    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+                }
+            }
+
+            async function pollStatus(jobId) {
+                try {
+                    const res = await fetch(`/api/bulk-status/${jobId}`);
+                    const job = await res.json();
+                    renderProgress(job);
+                } catch (err) {
+                    console.error('Poll error:', err);
+                }
+            }
+
+            // Main bulk generation
+            bulkGenBtn.addEventListener('click', async () => {
+                const lines = keywordsInput.value.split('\n').map(l => l.trim()).filter(Boolean);
+                if (lines.length === 0) { notify('키워드를 입력해 주세요.', 'error'); return; }
+                if (lines.length > 10) { notify('최대 10개까지만 가능합니다.', 'error'); return; }
+
+                const keywords = lines.slice(0, 10);
+                const category = document.getElementById('bulk-category').value.trim() || 'General';
+                const model = document.getElementById('bulk-ai-model').value;
+                const writingStyle = document.getElementById('bulk-writing-style').value;
+                const blog = document.getElementById('bulk-target-blog').value || currentBlog;
+                // 키워드별 제휴 링크 맵 수집
+                const keywordAffiliateMap = {};
+                const imageMode = document.querySelector('input[name="bulk-image-mode"]:checked').value;
+                document.getElementById('bulk-affiliate-keyword-list').querySelectorAll('[data-kw]').forEach(el => {
+                    const kw = el.dataset.kw;
+                    const links = el.value.split('\n').map(l => l.trim()).filter(Boolean)
+                        .map(l => { const parts = l.split('|').map(s => s.trim()); return { name: parts[0], url: parts[1] }; })
+                        .filter(l => l.name && l.url);
+                    if (links.length > 0) keywordAffiliateMap[kw] = links;
+                });
+                const mode = document.querySelector('input[name="bulk-publish-mode"]:checked').value;
+
+                let scheduleStart = null;
+                let scheduleInterval = 30;
+                if (mode === 'schedule') {
+                    const sv = document.getElementById('bulk-schedule-start').value;
+                    if (!sv) { notify('예약 시작 일시를 설정해 주세요.', 'error'); return; }
+                    scheduleStart = sv;
+                    scheduleInterval = parseInt(document.getElementById('bulk-schedule-interval').value) || 30;
+                }
+
+                // Disable UI
+                bulkGenBtn.disabled = true;
+                bulkGenLoader.style.display = 'inline-block';
+                bulkGenText.textContent = '서버에서 생성 중...';
+                resultSection.style.display = 'none';
+
+                // Init progress
+                progressSection.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressCount.textContent = `0/${keywords.length}`;
+                progressList.innerHTML = keywords.map(kw => statusItem(kw, '대기중', '○', '#9CA3AF')).join('');
+
+                try {
+                    // Send to server
+                    const res = await fetch('/api/bulk-generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            keywords, category, model, blog, mode,
+                            scheduleStart, scheduleInterval,
+                            thumbnailImage: bulkThumbnailRawSrc || null,
+                            writingStyle,
+                            keywordAffiliateMap,
+                            imageMode
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+
+                    // Poll for status every 3 seconds
+                    if (pollTimer) clearInterval(pollTimer);
+                    pollTimer = setInterval(() => pollStatus(data.jobId), 3000);
+                    notify('서버에서 대량 생성이 시작되었습니다. 다른 작업을 해도 됩니다.', 'success');
+                } catch (err) {
+                    notify('오류: ' + err.message, 'error');
+                    bulkGenBtn.disabled = false;
+                    bulkGenLoader.style.display = 'none';
+                    bulkGenText.textContent = '대량 생성 시작';
+                }
+            });
+        })();
+
     </script>
 </body>
 
