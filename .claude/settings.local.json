@@ -8,7 +8,8 @@
       "Bash(find /c/Users/iss59/Desktop/antigravity -maxdepth 3 -name wrangler.toml -o -name *cloudflare*)",
       "Bash(grep -r \"cloudflare\\\\|wrangler\\\\|Pages\" /c/Users/iss59/Desktop/antigravity/weblog --include=*.json --include=*.js --include=*.md)",
       "Bash(grep -r \"cloudflare\\\\|Pages\" /c/Users/iss59/Desktop/antigravity/weblog --include=*.md)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

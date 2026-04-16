@@ -894,15 +894,30 @@
                 <div class="input-group" id="bulk-affiliate-section">
                     <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                         <i data-lucide="shopping-cart" style="width: 18px; height: 18px; color: var(--primary);"></i>
-                        제휴 링크 <span style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">(선택 사항 — 키워드별 개별 입력)</span>
+                        제휴 링크 <span style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">(선택 사항)</span>
                     </label>
                     <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
-                        각 키워드 글에 넣을 제휴 링크를 따로 입력하세요. (쿠팡, 아마존, 알리 등 모든 제휴 링크 가능)<br>
-                        형식: <code style="background: var(--bg); padding: 1px 6px; border-radius: 4px; font-size: 0.78rem;">제품명 | https://...</code> (한 줄에 하나씩, 비워도 됨)
+                        각 행에 키워드, 제품명, 제휴 링크를 입력하세요. 키워드 입력 시 자동으로 채워집니다.
                     </p>
-                    <div id="bulk-affiliate-keyword-list" style="display: flex; flex-direction: column; gap: 12px;">
-                        <p id="bulk-affiliate-placeholder" style="font-size: 0.85rem; color: var(--text-muted); padding: 12px; background: var(--bg); border-radius: 10px; text-align: center;">위에서 키워드를 입력하면 여기에 키워드별 링크 입력칸이 생성됩니다.</p>
+                    <div style="overflow-x: auto;">
+                        <table id="bulk-affiliate-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <thead>
+                                <tr style="background: var(--bg); border-bottom: 2px solid var(--border);">
+                                    <th style="padding: 8px 10px; text-align: left; font-weight: 600; color: var(--text-muted); width: 30%;">키워드</th>
+                                    <th style="padding: 8px 10px; text-align: left; font-weight: 600; color: var(--text-muted); width: 25%;">제품명</th>
+                                    <th style="padding: 8px 10px; text-align: left; font-weight: 600; color: var(--text-muted);">제휴링크</th>
+                                    <th style="padding: 8px 10px; width: 36px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="bulk-affiliate-rows"></tbody>
+                        </table>
                     </div>
+                    <button type="button" id="bulk-affiliate-add-btn"
+                        style="margin-top: 10px; display: flex; align-items: center; gap: 6px; background: none; border: 1px dashed var(--border); border-radius: 8px; padding: 7px 14px; font-size: 0.82rem; color: var(--text-muted); cursor: pointer; width: 100%; justify-content: center; transition: border-color 0.2s, color 0.2s;"
+                        onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'"
+                        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+                        <i data-lucide="plus" style="width: 14px; height: 14px;"></i> 행 추가
+                    </button>
                 </div>
 
                 <div class="input-group" style="padding: 24px; background: linear-gradient(135deg, var(--primary-light) 0%, #FFFFFF 100%); border-radius: 20px; border: 1px solid var(--primary-light);">
@@ -3216,33 +3231,75 @@
                 renderAffiliateRows(lines.slice(0, 10));
             });
 
+            function buildAffiliateRow(kwValue) {
+                const tr = document.createElement('tr');
+                tr.style.cssText = 'border-bottom: 1px solid var(--border);';
+                tr.innerHTML = `
+                    <td style="padding: 6px 8px;">
+                        <input type="text" class="aff-kw" value="${kwValue.replace(/"/g, '&quot;')}"
+                            placeholder="키워드"
+                            style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid var(--border); font-size:0.82rem; font-family:inherit;">
+                    </td>
+                    <td style="padding: 6px 8px;">
+                        <input type="text" class="aff-name"
+                            placeholder="제품명"
+                            style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid var(--border); font-size:0.82rem; font-family:inherit;">
+                    </td>
+                    <td style="padding: 6px 8px;">
+                        <input type="text" class="aff-url"
+                            placeholder="https://link.coupang.com/..."
+                            style="width:100%; padding:6px 8px; border-radius:6px; border:1px solid var(--border); font-size:0.82rem; font-family:monospace;">
+                    </td>
+                    <td style="padding: 6px 8px; text-align:center;">
+                        <button type="button" title="삭제"
+                            style="background:none; border:none; cursor:pointer; color:#9CA3AF; padding:4px; border-radius:4px; line-height:0;"
+                            onmouseover="this.style.color='#EF4444'" onmouseout="this.style.color='#9CA3AF'"
+                            onclick="this.closest('tr').remove()">
+                            <i data-lucide="x" style="width:14px;height:14px;"></i>
+                        </button>
+                    </td>
+                `;
+                return tr;
+            }
+
             function renderAffiliateRows(keywords) {
-                const list = document.getElementById('bulk-affiliate-keyword-list');
-                const placeholder = document.getElementById('bulk-affiliate-placeholder');
-                if (keywords.length === 0) {
-                    list.innerHTML = '<p id="bulk-affiliate-placeholder" style="font-size: 0.85rem; color: var(--text-muted); padding: 12px; background: var(--bg); border-radius: 10px; text-align: center;">위에서 키워드를 입력하면 여기에 키워드별 링크 입력칸이 생성됩니다.</p>';
-                    return;
-                }
-                if (placeholder) placeholder.remove();
-                section.style.display = 'block';
+                const tbody = document.getElementById('bulk-affiliate-rows');
+                if (!tbody) return;
 
-                // 기존 행의 입력값 보존
-                const existing = {};
-                list.querySelectorAll('[data-kw]').forEach(el => {
-                    existing[el.dataset.kw] = el.value;
+                // 기존에 값이 채워진 행 보존
+                const existing = [];
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    existing.push({
+                        kw:   tr.querySelector('.aff-kw')?.value.trim()   || '',
+                        name: tr.querySelector('.aff-name')?.value.trim() || '',
+                        url:  tr.querySelector('.aff-url')?.value.trim()  || ''
+                    });
                 });
+                const filledRows = existing.filter(r => r.name || r.url);
+                const coveredKws = new Set(filledRows.map(r => r.kw));
+                const newKwRows = keywords.filter(kw => !coveredKws.has(kw));
 
-                list.innerHTML = keywords.map(kw => `
-                    <div style="background: var(--bg); border-radius: 12px; padding: 12px 14px; border: 1px solid var(--border);">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 8px;">📌 ${kw}</div>
-                        <textarea data-kw="${kw.replace(/"/g, '&quot;')}" rows="2"
-                            placeholder="제품명 | https://link.coupang.com/a/xxx&#10;제품명2 | https://link.coupang.com/a/yyy"
-                            style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.82rem; font-family: monospace; resize: vertical; line-height: 1.5;"
-                        >${existing[kw] || ''}</textarea>
-                    </div>
-                `).join('');
+                tbody.innerHTML = '';
+                filledRows.forEach(r => {
+                    const tr = buildAffiliateRow(r.kw);
+                    tr.querySelector('.aff-name').value = r.name;
+                    tr.querySelector('.aff-url').value  = r.url;
+                    tbody.appendChild(tr);
+                });
+                newKwRows.forEach(kw => tbody.appendChild(buildAffiliateRow(kw)));
+
+                if (tbody.children.length === 0) {
+                    tbody.appendChild(buildAffiliateRow(''));
+                }
                 lucide.createIcons();
             }
+
+            document.getElementById('bulk-affiliate-add-btn').addEventListener('click', () => {
+                const tbody = document.getElementById('bulk-affiliate-rows');
+                tbody.appendChild(buildAffiliateRow(''));
+                lucide.createIcons();
+                tbody.lastElementChild.querySelector('.aff-kw').focus();
+            });
 
             // Publish mode toggle
             document.querySelectorAll('input[name="bulk-publish-mode"]').forEach(radio => {
@@ -3366,12 +3423,13 @@
                 // 키워드별 제휴 링크 맵 수집
                 const keywordAffiliateMap = {};
                 const imageMode = document.querySelector('input[name="bulk-image-mode"]:checked').value;
-                document.getElementById('bulk-affiliate-keyword-list').querySelectorAll('[data-kw]').forEach(el => {
-                    const kw = el.dataset.kw;
-                    const links = el.value.split('\n').map(l => l.trim()).filter(Boolean)
-                        .map(l => { const parts = l.split('|').map(s => s.trim()); return { name: parts[0], url: parts[1] }; })
-                        .filter(l => l.name && l.url);
-                    if (links.length > 0) keywordAffiliateMap[kw] = links;
+                document.getElementById('bulk-affiliate-rows').querySelectorAll('tr').forEach(tr => {
+                    const kw   = tr.querySelector('.aff-kw')?.value.trim()   || '';
+                    const name = tr.querySelector('.aff-name')?.value.trim() || '';
+                    const url  = tr.querySelector('.aff-url')?.value.trim()  || '';
+                    if (!kw || !name || !url) return;
+                    if (!keywordAffiliateMap[kw]) keywordAffiliateMap[kw] = [];
+                    keywordAffiliateMap[kw].push({ name, url });
                 });
                 const mode = document.querySelector('input[name="bulk-publish-mode"]:checked').value;
 
