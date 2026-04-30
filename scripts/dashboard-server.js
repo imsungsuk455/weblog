@@ -372,6 +372,19 @@ app.get("/api/posts/:fileName", (req, res) => {
   } catch (err) { res.status(500).json({ error: "게시물 조회 실패: " + err.message }); }
 });
 
+// API route to update a post
+app.put("/api/posts/:fileName", (req, res) => {
+  const { fileName } = req.params;
+  const { blog, content } = req.body;
+  if (!content) return res.status(400).json({ error: "content가 필요합니다." });
+  const filePath = path.join(getBlogDir(blog), fileName);
+  try {
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: "파일을 찾을 수 없습니다." });
+    fs.writeFileSync(filePath, content, { encoding: "utf8" });
+    res.json({ message: "저장되었습니다." });
+  } catch (err) { res.status(500).json({ error: "저장 실패: " + err.message }); }
+});
+
 // API route to delete a post
 app.delete("/api/posts/:fileName", (req, res) => {
   const { fileName } = req.params;
@@ -930,7 +943,7 @@ app.post("/api/publish", async (req, res) => {
 const bulkJobs = new Map();
 
 app.post("/api/bulk-generate", (req, res) => {
-  const { keywords, category = "General", model: modelId = "gemini-3-flash-preview", blog, mode = "draft", scheduleStart, scheduleInterval = 30, thumbnailImage, writingStyle = "info", keywordAffiliateMap = {}, imageMode = "unsplash" } = req.body;
+  const { keywords, category = "General", model: modelId = "gemini-3-flash-preview", blog, mode = "draft", scheduleStart, scheduleInterval = 30, thumbnailImage, writingStyle = "info", keywordAffiliateMap = {}, imageMode = "unsplash", researchMode = "none" } = req.body;
 
   if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
     return res.status(400).json({ error: "키워드가 필요합니다." });
@@ -1001,10 +1014,32 @@ app.post("/api/bulk-generate", (req, res) => {
         };
         const styleDesc = styleDescriptions[writingStyle] || styleDescriptions.info;
 
+        // 구글 검색 리서치 (researchMode === "google")
+        let researchContext = "";
+        if (researchMode === "google") {
+          const serpApiKey = process.env.SERPAPI_KEY;
+          if (serpApiKey) {
+            try {
+              const searchUrl = `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(kw)}&hl=ko&gl=kr&num=5&api_key=${serpApiKey}`;
+              const searchRes = await fetch(searchUrl);
+              if (searchRes.ok) {
+                const searchData = await searchRes.json();
+                const results = (searchData.organic_results || []).slice(0, 5);
+                if (results.length > 0) {
+                  researchContext = `\n    [참고 자료 - 구글 검색 상위 결과]\n    아래 검색 결과를 참고해서 최신 정보와 실제 내용을 반영하세요.\n` +
+                    results.map((r, idx) =>
+                      `    ${idx + 1}. 제목: ${r.title || ""}\n       요약: ${r.snippet || ""}`
+                    ).join("\n") + "\n";
+                }
+              }
+            } catch (_) { /* 검색 실패 시 무시하고 AI 자체 지식으로 생성 */ }
+          }
+        }
+
         const prompt = `
     [목표]
     구글 애드센스 승인을 통과할 수 있을 만큼 품질이 좋은 블로그 글을 작성한다.
-    주제는 "${kw}"이며, ${styleDesc}로 쓴다.
+    주제는 "${kw}"이며, ${styleDesc}로 쓴다.${researchContext}
 
     [타깃 독자]
     이 주제에 관심이 있는 한국 독자. 처음 접하는 사람도 이해할 수 있도록 쉽게 설명한다.

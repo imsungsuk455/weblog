@@ -863,6 +863,24 @@
                 </div>
 
                 <div class="input-group">
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <i data-lucide="search" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                        리서치 방식
+                    </label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 160px; transition: var(--transition);">
+                            <input type="radio" name="bulk-research-mode" value="none" checked style="accent-color: var(--primary);"> 없음 (AI 자체 지식)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 160px; transition: var(--transition);">
+                            <input type="radio" name="bulk-research-mode" value="google" style="accent-color: var(--primary);"> 구글 검색 (SerpAPI)
+                        </label>
+                    </div>
+                    <p id="bulk-research-mode-hint" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; display: none;">
+                        키워드로 구글 검색 후 상위 결과를 AI 참고자료로 활용합니다. 글 정확도가 높아집니다.
+                    </p>
+                </div>
+
+                <div class="input-group">
                     <label>발행 모드</label>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <label style="display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 2px solid var(--border); cursor: pointer; flex: 1; min-width: 140px; transition: var(--transition);">
@@ -1785,6 +1803,7 @@
                             <div class="post-actions" style="display: flex; gap: 8px; align-items: center;">
                                 ${p.status === 'draft' ? `
                                     <span class="badge" style="background: #FEE2E2; color: #991B1B;">임시저장</span>
+                                    <button class="btn" onclick="editPost('${p.fileName.replace(/'/g, "\\'")}')" title="수정" style="background:var(--bg); border:1px solid var(--border); color:var(--text-main);">수정</button>
                                     <button class="btn" onclick="publishPost('${p.fileName.replace(/'/g, "\\'")}')" title="발행">발행</button>
                                 ` : p.status === 'scheduled' ? `
                                     <span class="badge" style="background: #FEF3C7; color: #92400E;">예약됨</span>
@@ -2029,6 +2048,67 @@
             notify('썸네일 이미지가 제거되었습니다.', 'info');
             lucide.createIcons();
         });
+
+        // ── 글 수정 모달 ──
+        const editModal = document.createElement('div');
+        editModal.id = 'edit-post-modal';
+        editModal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;';
+        editModal.innerHTML = `
+            <div style="background:#fff; border-radius:16px; width:90vw; max-width:900px; height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border);">
+                    <span id="edit-modal-title" style="font-weight:600; font-size:1rem; color:var(--text-main);">글 수정</span>
+                    <div style="display:flex; gap:8px;">
+                        <button id="edit-modal-save" class="btn" style="background:var(--primary); color:#fff; padding:8px 18px;">저장</button>
+                        <button id="edit-modal-close" class="btn" style="background:var(--bg); color:var(--text-muted); padding:8px 14px;">닫기</button>
+                    </div>
+                </div>
+                <textarea id="edit-modal-textarea" style="flex:1; padding:16px 20px; border:none; outline:none; font-family:monospace; font-size:0.875rem; line-height:1.7; resize:none; border-radius:0 0 16px 16px;"></textarea>
+            </div>
+        `;
+        document.body.appendChild(editModal);
+
+        let editingFileName = null;
+
+        document.getElementById('edit-modal-close').addEventListener('click', () => {
+            editModal.style.display = 'none';
+        });
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) editModal.style.display = 'none';
+        });
+        document.getElementById('edit-modal-save').addEventListener('click', async () => {
+            if (!editingFileName) return;
+            const content = document.getElementById('edit-modal-textarea').value;
+            try {
+                const res = await fetch(`/api/posts/${encodeURIComponent(editingFileName)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileName: editingFileName, blog: currentBlog, content })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                notify('저장되었습니다.', 'success');
+                editModal.style.display = 'none';
+                loadData();
+            } catch (err) {
+                notify('저장 실패: ' + err.message, 'error');
+            }
+        });
+
+        window.editPost = async (fileName) => {
+            editingFileName = fileName;
+            document.getElementById('edit-modal-title').textContent = `수정 중: ${fileName}`;
+            document.getElementById('edit-modal-textarea').value = '불러오는 중...';
+            editModal.style.display = 'flex';
+            try {
+                const res = await fetch(`/api/posts/${encodeURIComponent(fileName)}?blog=${currentBlog}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                document.getElementById('edit-modal-textarea').value = data.content;
+            } catch (err) {
+                notify('불러오기 실패: ' + err.message, 'error');
+                editModal.style.display = 'none';
+            }
+        };
 
         // Publishing helper moved to window scope to avoid duplicate definitions
         window.publishPost = async (fileName) => {
@@ -3220,6 +3300,14 @@
                 });
             });
 
+            // Research mode hint toggle
+            document.querySelectorAll('input[name="bulk-research-mode"]').forEach(r => {
+                r.addEventListener('change', () => {
+                    document.getElementById('bulk-research-mode-hint').style.display =
+                        r.value === 'google' && r.checked ? 'block' : 'none';
+                });
+            });
+
             // Keyword count + affiliate rows
             keywordsInput.addEventListener('input', () => {
                 const lines = keywordsInput.value.split('\n').filter(l => l.trim());
@@ -3423,6 +3511,7 @@
                 // 키워드별 제휴 링크 맵 수집
                 const keywordAffiliateMap = {};
                 const imageMode = document.querySelector('input[name="bulk-image-mode"]:checked').value;
+                const researchMode = document.querySelector('input[name="bulk-research-mode"]:checked').value;
                 document.getElementById('bulk-affiliate-rows').querySelectorAll('tr').forEach(tr => {
                     const kw   = tr.querySelector('.aff-kw')?.value.trim()   || '';
                     const name = tr.querySelector('.aff-name')?.value.trim() || '';
@@ -3465,7 +3554,8 @@
                             thumbnailImage: bulkThumbnailRawSrc || null,
                             writingStyle,
                             keywordAffiliateMap,
-                            imageMode
+                            imageMode,
+                            researchMode
                         })
                     });
                     const data = await res.json();
