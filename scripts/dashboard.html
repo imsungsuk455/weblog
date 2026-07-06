@@ -2058,6 +2058,7 @@
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border);">
                     <span id="edit-modal-title" style="font-weight:600; font-size:1rem; color:var(--text-main);">글 수정</span>
                     <div style="display:flex; gap:8px;">
+                        <button id="edit-modal-link-btn" class="btn" style="background:var(--bg); color:var(--text-main); border:1px solid var(--border); padding:8px 14px; font-size:0.875rem;" title="링크 삽입">🔗 링크</button>
                         <button id="edit-modal-save" class="btn" style="background:var(--primary); color:#fff; padding:8px 18px;">저장</button>
                         <button id="edit-modal-close" class="btn" style="background:var(--bg); color:var(--text-muted); padding:8px 14px;">닫기</button>
                     </div>
@@ -2065,6 +2066,30 @@
                 <textarea id="edit-modal-textarea" style="flex:1; padding:16px 20px; border:none; outline:none; font-family:monospace; font-size:0.875rem; line-height:1.7; resize:none; border-radius:0 0 16px 16px;"></textarea>
             </div>
         `;
+
+        const linkModal = document.createElement('div');
+        linkModal.id = 'link-insert-modal';
+        linkModal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;';
+        linkModal.innerHTML = `
+            <div style="background:#fff; border-radius:16px; padding:24px; width:min(420px, 90vw); box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <h3 style="margin:0 0 20px; font-size:1.1rem; color:var(--text-main);">링크 삽입</h3>
+                <div style="display:flex; flex-direction:column; gap:16px;">
+                    <div>
+                        <label style="display:block; font-size:0.875rem; font-weight:500; color:var(--text-main); margin-bottom:6px;">표시할 텍스트</label>
+                        <input type="text" id="link-text" placeholder="예: 더보기, 원문보기" style="width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:10px; font-size:0.95rem; box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.875rem; font-weight:500; color:var(--text-main); margin-bottom:6px;">URL 주소</label>
+                        <input type="url" id="link-url" placeholder="https://example.com" style="width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:10px; font-size:0.95rem; box-sizing:border-box;">
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:24px;">
+                    <button id="link-modal-cancel" class="btn" style="background:var(--bg); color:var(--text-muted); padding:10px 20px;">취소</button>
+                    <button id="link-modal-insert" class="btn" style="background:var(--primary); color:#fff; padding:10px 20px;">삽입</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(linkModal);
         document.body.appendChild(editModal);
 
         let editingFileName = null;
@@ -2092,6 +2117,38 @@
             } catch (err) {
                 notify('저장 실패: ' + err.message, 'error');
             }
+        });
+
+        document.getElementById('edit-modal-link-btn').addEventListener('click', () => {
+            document.getElementById('link-text').value = '';
+            document.getElementById('link-url').value = '';
+            linkModal.style.display = 'flex';
+            document.getElementById('link-text').focus();
+        });
+
+        document.getElementById('link-modal-cancel').addEventListener('click', () => {
+            linkModal.style.display = 'none';
+        });
+        linkModal.addEventListener('click', (e) => {
+            if (e.target === linkModal) linkModal.style.display = 'none';
+        });
+
+        document.getElementById('link-modal-insert').addEventListener('click', () => {
+            const text = document.getElementById('link-text').value.trim();
+            const url = document.getElementById('link-url').value.trim();
+            if (!url) { notify('URL을 입력해 주세요.', 'error'); return; }
+            const displayText = text || url;
+            const markdown = `[${displayText}](${url})`;
+            const textarea = document.getElementById('edit-modal-textarea');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const before = textarea.value.substring(0, start);
+            const after = textarea.value.substring(end);
+            textarea.value = before + markdown + after;
+            textarea.selectionStart = textarea.selectionEnd = start + markdown.length;
+            textarea.focus();
+            linkModal.style.display = 'none';
+            notify('링크가 삽입되었습니다.', 'success');
         });
 
         window.editPost = async (fileName) => {
@@ -2309,6 +2366,11 @@
                 const pubDate = new Date(pubDateInput).toISOString();
                 if (content.includes('pubDatetime:')) {
                     content = content.replace(/pubDatetime:\s*.*?\n/, `pubDatetime: ${pubDate}\n`);
+                }
+            } else if (isPublish) {
+                const now = new Date().toISOString();
+                if (content.includes('pubDatetime:')) {
+                    content = content.replace(/pubDatetime:\s*.*?\n/, `pubDatetime: ${now}\n`);
                 }
             }
 
