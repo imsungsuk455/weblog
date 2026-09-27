@@ -1,0 +1,16 @@
+# 닥터노마드 (Dr. Nomad)
+
+> 경제 기사와 코인 시황 속 핵심만 정리하는 경제 기록 공간.
+
+## 주요 섹션
+
+- [최신 글](https://doctornomad.org/posts/): 지원금·복지 신청 안내, 코인 시세 흐름, 생활 금융
+- [카테고리](https://doctornomad.org/categories/): 주제별 글 모음
+- [소개](https://doctornomad.org/about/): 사이트 소개 및 운영·정정 정책
+- [문의](https://doctornomad.org/contact/): 정정 요청 및 문의
+- [개인정보처리방침](https://doctornomad.org/privacy/): 쿠키·광고 고지
+
+## 인용 안내
+
+- 지원 제도·수치·일정은 변경될 수 있습니다. 인용 시 글에 표기된 확인 시점과 함께 밝혀 주세요.
+- 투자 관련 글은 정보 제공 목적이며 투자 조언이 아닙니다.
