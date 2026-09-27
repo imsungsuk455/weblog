@@ -1,0 +1,88 @@
+---
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Layout from "@/layouts/Layout.astro";
+import { SITE, SITE_ID_CURRENT } from "@/config";
+
+const COPY: Record<
+  string,
+  { title: string; intro: string; topics: string[]; closing: string }
+> = {
+  nomad: {
+    title: "닥터노마드 소개",
+    intro:
+      "매일 아침 쏟아지는 경제 기사와 코인 시황 속에서, 진짜 자산을 지켜줄 수 있는 정보만 노트에 필기하듯 정리합니다. 닥터노마드(Dr. Nomad)는 복잡한 금융 시장을 누구나 이해할 수 있는 언어로 풀어내는 경제 기록 공간입니다.",
+    topics: [
+      "GLOBAL ECONOMY: 금리, 환율, 원자재 등 전 세계 돈의 흐름",
+      "CRYPTO & WEB 3: 변동성 속에서 찾아내는 블록체인의 가치와 실전 시황",
+      "SMART INVESTMENT: 부동산, 주식, 대체 투자 등 자산별 전략",
+      "LIFE FINANCE: 세금, 보험, 정부 지원금 등 실전 생활 금융",
+    ],
+    closing:
+      "투자 관련 글은 참고 자료이며 투자 조언이 아닙니다. 판단과 책임은 독자 본인에게 있습니다.",
+  },
+  motors: {
+    title: "닥터모터스 소개",
+    intro:
+      "최신 뉴스부터 시승기, 관리 팁까지. 닥터모터스(Dr. Motors)는 자동차에 관한 모든 정보를 전문가의 시선으로 깔끔하게 정리하는 카 라이프 가이드입니다.",
+    topics: [
+      "신차 소식: 출시·풀체인지·가격 정보를 공식 자료 기준으로 정리",
+      "시승기: 주행 성능, 승차감, 인포테인먼트 실사용 후기",
+      "구매 가이드: 트림 선택, 충전 인프라, 유지비 체크리스트",
+      "관리 팁: 계절별 점검, 소모품 교체 주기, AS 안내",
+    ],
+    closing:
+      "제원·가격·보조금 등 수치는 변동될 수 있으니 구매 전 반드시 공식 홈페이지에서 확인해 주세요.",
+  },
+  kkul: {
+    title: "꿀로그 소개",
+    intro:
+      "꿀로그(Kkul-log)는 넘쳐나는 상품 정보 속에서 돈 아깝지 않은 선택을 돕는 쇼핑 기록 공간입니다. IT 기기부터 식품·생활용품까지, 핵심 요약과 비교 분석으로 고민 시간을 줄여드립니다.",
+    topics: [
+      "IT & GADGET: 실사용 중심의 기기 리뷰와 꿀팁",
+      "FOOD & LIFESTYLE: 삶의 질을 높이는 식품과 생활용품",
+      "FASHION & BEAUTY: 실용적인 스타일링 아이템",
+      "SHOPPING HACKS: 할인·직구·결제 똑똑하게 쓰는 법",
+    ],
+    closing:
+      "추천 제품에 제휴 링크가 포함될 수 있으며, 구매 시 일정액의 수수료를 제공받을 수 있습니다.",
+  },
+};
+
+const copy = COPY[SITE_ID_CURRENT] ?? COPY.nomad;
+---
+
+<Layout title={`${copy.title} | ${SITE.title}`}>
+  <Header />
+  <Breadcrumb />
+  <main id="main-content" class="app-layout">
+    <section id="about" class="app-prose mb-28 max-w-app">
+      <h1 class="text-2xl tracking-wider sm:text-3xl">{copy.title}</h1>
+      <p>{copy.intro}</p>
+      <h2>다루는 이야기</h2>
+      <ul>
+        {copy.topics.map(topic => <li>{topic}</li>)}
+      </ul>
+      <p>{copy.closing}</p>
+      <h2>운영 정보</h2>
+      <ul>
+        <li>운영자: 본 사이트 운영자 (문의: <a href="/contact/">문의 페이지</a>)</li>
+        <li>
+          수집 방식: 공식 보도자료·기관 발표 등 1차 출처를 우선하고, 발행 전
+          수치·일정을 대조합니다.
+        </li>
+        <li>
+          정정 정책: 오류 제보 시 7일 이내에 확인·수정하고 수정 시각을
+          표기합니다.
+        </li>
+        <li>
+          광고 고지: Google AdSense 광고를 게재할 수 있으며, 제3자
+          쿠키·웹비콘 사용 안내는 <a href="/privacy/">개인정보처리방침</a>을
+          참고해 주세요.
+        </li>
+      </ul>
+    </section>
+  </main>
+  <Footer />
+</Layout>

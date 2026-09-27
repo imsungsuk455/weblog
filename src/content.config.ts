@@ -21,6 +21,8 @@ const blog = defineCollection({
       canonicalURL: z.string().optional(),
       hideEditPost: z.boolean().optional(),
       timezone: z.string().optional(),
+      // 멀티사이트: 이 글이 노출될 사이트 ID 목록. 생략 시 nomad.
+      sites: z.array(z.string()).default(["nomad"]),
     }),
 });
 
